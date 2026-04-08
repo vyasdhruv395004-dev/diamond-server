@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: diamond-server
+    env: node
+    plan: free
+    rootDir: diamond-server
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: MOOGOLD_PARTNER_ID
+        sync: false
+      - key: MOOGOLD_SECRET_KEY
+        sync: false
+      - key: ADMIN_TOKEN
+        sync: false
