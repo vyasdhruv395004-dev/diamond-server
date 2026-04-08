@@ -1,0 +1,4140 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neon Tournaments</title>
+
+    <!-- Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;600&display=swap"
+        rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-messaging.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #0f0f0f;
+            --surface-color: #1a1a24;
+            --primary-neon: #00ffcc;
+            --secondary-neon: #e900ff;
+            --accent-color: #ffaa00;
+            --text-main: #ffffff;
+            --text-muted: #888899;
+            --font-display: 'Orbitron', sans-serif;
+            --font-body: 'Poppins', sans-serif;
+            --nav-height: 70px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-body);
+            display: flex;
+            justify-content: center;
+            overflow: hidden;
+            /* App-like container handles scrolling */
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* Remove dynamic green line scrollbar */
+        ::-webkit-scrollbar {
+            width: 0;
+            display: none;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 480px;
+            height: 100%;
+            background-color: var(--bg-color);
+            position: relative;
+            overflow-y: auto;
+            overflow-x: hidden;
+            overscroll-behavior-y: contain;
+            box-shadow: 0 0 30px rgba(0, 255, 204, 0.1);
+            border-left: 1px solid rgba(255, 255, 255, 0.05);
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Typography */
+        h1,
+        h2,
+        h3 {
+            font-family: var(--font-display);
+            text-transform: uppercase;
+        }
+
+        .text-neon {
+            color: var(--primary-neon);
+            text-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
+        }
+
+        .text-neon-alt {
+            color: var(--secondary-neon);
+            text-shadow: 0 0 10px rgba(233, 0, 255, 0.5);
+        }
+
+        .text-muted {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        /* Screens */
+        .screen {
+            display: none;
+            padding: 50px 20px 20px 20px;
+            padding-bottom: calc(var(--nav-height) + 20px);
+            animation: fadeIn 0.3s ease-in-out;
+            min-height: 100%;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        .screen-no-nav {
+            padding-bottom: 20px;
+        }
+
+        /* for login/register */
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            max-width: 480px;
+            /* match app-container max-width */
+            height: var(--nav-height);
+            background: rgba(26, 26, 36, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(0, 255, 204, 0.2);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 60px;
+        }
+
+        .nav-item i {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-item span {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .nav-item.active {
+            color: var(--primary-neon);
+            text-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
+        }
+
+        .nav-item.active i {
+            transform: translateY(-5px);
+        }
+
+        /* Inputs & Buttons */
+        .input-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .input-group i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--primary-neon);
+            width: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            pointer-events: none;
+            z-index: 5;
+            font-size: 1rem;
+        }
+
+        .neon-input {
+            width: 100%;
+            padding: 15px 15px 15px 45px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+            border-radius: 8px;
+            font-family: var(--font-body);
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .neon-input:focus {
+            border-color: var(--primary-neon);
+            box-shadow: 0 0 15px rgba(0, 255, 204, 0.2);
+            background: rgba(0, 255, 204, 0.05);
+        }
+
+        .neon-button {
+            width: 100%;
+            padding: 15px;
+            background: transparent;
+            color: var(--primary-neon);
+            border: 2px solid var(--primary-neon);
+            border-radius: 8px;
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .neon-button:hover,
+        .neon-button:active {
+            background: var(--primary-neon);
+            color: var(--bg-color);
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.6);
+        }
+
+        .neon-button.secondary {
+            border-color: var(--secondary-neon);
+            color: var(--secondary-neon);
+        }
+
+        .neon-button.secondary:hover {
+            background: var(--secondary-neon);
+            color: var(--bg-color);
+            box-shadow: 0 0 20px rgba(233, 0, 255, 0.6);
+        }
+
+        /* Cards */
+        .card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 22px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(0, 255, 204, 0.05), transparent 60%);
+            pointer-events: none;
+        }
+
+        .card:hover {
+            transform: translateY(-5px) scale(1.02);
+            border-color: rgba(0, 255, 204, 0.3);
+            box-shadow: 0 12px 40px rgba(0, 255, 204, 0.15);
+        }
+
+        /* Tournament Card Specifics */
+        .tourney-img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            background: #2a2a35;
+        }
+
+        .tourney-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .tourney-title {
+            font-size: 1.1rem;
+            line-height: 1.2;
+            font-family: var(--font-display);
+        }
+
+        .tourney-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 0.85rem;
+            margin-bottom: 15px;
+            color: var(--text-muted);
+        }
+
+        .tourney-meta i {
+            color: var(--secondary-neon);
+        }
+
+        .tourney-stats {
+            display: flex;
+            justify-content: space-between;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .stat-box {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-family: var(--font-display);
+            color: var(--primary-neon);
+            font-size: 1.2rem;
+            font-weight: 900;
+            letter-spacing: 1px;
+        }
+
+        .stat-label {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+        }
+
+        /* Labels & Badges */
+        .badge {
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 0.65rem;
+            font-family: var(--font-display);
+            background: rgba(0, 255, 204, 0.08);
+            color: var(--primary-neon);
+            border: 1px solid rgba(0, 255, 204, 0.2);
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        /* Premium Status Badges */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-family: var(--font-display);
+            font-size: 0.7rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .status-live {
+            background: rgba(255, 51, 51, 0.15);
+            color: #ff3333;
+            border-color: rgba(255, 51, 51, 0.3);
+            animation: glow-red 2s infinite;
+        }
+
+        .status-soon {
+            background: rgba(255, 170, 0, 0.15);
+            color: var(--accent-color);
+            border-color: rgba(255, 170, 0, 0.3);
+        }
+
+        .status-upcoming {
+            background: rgba(0, 255, 204, 0.1);
+            color: var(--primary-neon);
+            border-color: rgba(0, 255, 204, 0.3);
+        }
+
+        .status-completed {
+            background: rgba(136, 136, 136, 0.15);
+            color: #888;
+            border-color: rgba(136, 136, 136, 0.3);
+        }
+
+        @keyframes glow-red {
+            0% {
+                box-shadow: 0 0 5px rgba(255, 51, 51, 0.2);
+            }
+
+            50% {
+                box-shadow: 0 0 15px rgba(255, 51, 51, 0.5);
+            }
+
+            100% {
+                box-shadow: 0 0 5px rgba(255, 51, 51, 0.2);
+            }
+        }
+
+        /* Header */
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .app-header h1 {
+            font-size: 1.8rem;
+            letter-spacing: 1px;
+        }
+
+        /* Map Preview Modal */
+        .map-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 15, 15, 0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            flex-direction: column;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .map-modal.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .map-preview-img {
+            max-width: 90%;
+            max-height: 70vh;
+            border-radius: 12px;
+            box-shadow: 0 0 30px rgba(0, 255, 204, 0.4);
+            border: 2px solid var(--primary-neon);
+            margin-bottom: 20px;
+        }
+
+        /* Details Screen */
+        .detail-banner {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        }
+
+        .rules-box {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 170, 0, 0.2);
+            border-left: 4px solid var(--accent-color);
+            margin-top: 20px;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            color: #ccc;
+        }
+
+        .section-title {
+            font-family: var(--font-display);
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin: 30px 0 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: 1px;
+        }
+
+        /* Detail Stats Grid */
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .detail-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .detail-item i {
+            color: var(--primary-neon);
+            font-size: 0.9rem;
+            margin-bottom: 2px;
+        }
+
+        .detail-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .detail-value {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .countdown-box {
+            text-align: center;
+            padding: 15px;
+            background: rgba(0, 255, 204, 0.05);
+            border: 1px solid rgba(0, 255, 204, 0.2);
+            border-radius: 8px;
+            margin: 20px 0;
+            font-family: var(--font-display);
+        }
+
+        .countdown-time {
+            font-size: 2rem;
+            color: var(--primary-neon);
+            text-shadow: 0 0 10px rgba(0, 255, 204, 0.4);
+        }
+
+        .room-details-box {
+            background: rgba(233, 0, 255, 0.05);
+            border: 1px dashed var(--secondary-neon);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        /* Edit Profile Modal */
+        .edit-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 15, 15, 0.98);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .edit-modal.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .edit-card {
+            width: 90%;
+            max-width: 400px;
+            background: var(--surface-color);
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid var(--primary-neon);
+            box-shadow: 0 0 30px rgba(255, 0, 85, 0.2);
+        }
+
+        /* Match History Cards */
+        .history-card {
+            background: var(--surface-color);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            margin-bottom: 25px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .history-banner {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            opacity: 0.6;
+            transition: opacity 0.3s;
+        }
+
+        .history-card:hover .history-banner {
+            opacity: 0.8;
+        }
+
+        .history-content {
+            padding: 15px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .history-winner-badge {
+            position: absolute;
+            top: -20px;
+            right: 15px;
+            background: linear-gradient(135deg, #ffd700, #ffaa00);
+            color: #000;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            font-family: var(--font-display);
+            box-shadow: 0 4px 10px rgba(255, 215, 0, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            border: 2px solid var(--surface-color);
+        }
+
+        .history-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .history-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--primary-neon);
+        }
+
+        .history-text {
+            flex: 1;
+        }
+
+        .history-winner-name {
+            font-weight: 700;
+            color: #fff;
+            font-size: 1rem;
+        }
+
+        .history-tourney-name {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 90%;
+            max-width: 400px;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: rgba(26, 26, 36, 0.85);
+            backdrop-filter: blur(12px);
+            color: white;
+            padding: 14px 22px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-left: 4px solid var(--primary-neon);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.9rem;
+            animation: toastIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards,
+                toastOut 0.4s 3.2s cubic-bezier(0.6, -0.28, 0.735, 0.045) forwards;
+        }
+
+        .toast.error {
+            border-left-color: #ff3333;
+        }
+
+        /* Premium Countdown Timer */
+        .timer-segments {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .timer-block {
+            background: rgba(0, 255, 204, 0.05);
+            border: 1px solid rgba(0, 255, 204, 0.3);
+            border-radius: 8px;
+            min-width: 65px;
+            padding: 10px 5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 0 10px rgba(0, 255, 204, 0.1);
+        }
+
+        .timer-value {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: var(--primary-neon);
+            text-shadow: 0 0 8px rgba(0, 255, 204, 0.4);
+            line-height: 1;
+        }
+
+        .timer-unit {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-top: 4px;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .toast i {
+            font-size: 1.2rem;
+            color: var(--primary-neon);
+        }
+
+        .toast.error i {
+            color: #ff3333;
+        }
+
+        @keyframes toastIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes toastOut {
+            from {
+                opacity: 1;
+            }
+
+            to {
+                opacity: 0;
+            }
+        }
+
+        /* Loader */
+        .loader-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 15, 15, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+            flex-direction: column;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .loader-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(0, 255, 204, 0.2);
+            border-top-color: var(--primary-neon);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loader-text {
+            margin-top: 15px;
+            font-family: var(--font-display);
+            color: var(--primary-neon);
+            letter-spacing: 2px;
+        }
+
+        /* Profile details */
+        .profile-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .avatar {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, var(--primary-neon), var(--secondary-neon));
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 15px auto;
+            font-size: 3rem;
+            color: #fff;
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.4);
+            overflow: hidden;
+            border: 2px solid var(--accent-color);
+        }
+
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .profile-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Go back btn */
+        .btn-back {
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        /* Leaderboard */
+        .lead-card {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: var(--surface-color);
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .lead-rank {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            color: var(--accent-color);
+            width: 40px;
+            text-align: center;
+        }
+
+        /* Joined Players List */
+        .player-list-container {
+            margin-top: 25px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 12px;
+            padding: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .player-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .player-item:last-child {
+            border-bottom: none;
+        }
+
+        .player-avatar {
+            width: 35px;
+            height: 35px;
+            background: var(--surface-color);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.9rem;
+            color: var(--primary-neon);
+            border: 1px solid var(--primary-neon);
+        }
+
+        .player-info {
+            flex: 1;
+        }
+
+        .player-name {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .player-uid {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* Pull to Refresh */
+        .pull-indicator {
+            position: absolute;
+            top: -50px;
+            left: 0;
+            width: 100%;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--primary-neon);
+            transition: transform 0.2s cubic-bezier(0, 0, 0.2, 1);
+            z-index: 50;
+        }
+
+        .pull-indicator i {
+            font-size: 1.5rem;
+            transition: transform 0.2s;
+        }
+
+        .pull-indicator.spinning i {
+            animation: spinAround 0.8s linear infinite;
+        }
+
+        /* Notification Badge */
+        .notification-btn {
+            position: relative;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .notif-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background: #ff0055;
+            color: white;
+            font-size: 0.65rem;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            font-weight: 900;
+            border: 2px solid var(--bg-color);
+            box-shadow: 0 0 15px rgba(255, 0, 85, 0.6);
+            animation: badgePulse 2s infinite;
+        }
+
+        @keyframes badgePulse {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 5px rgba(255, 0, 85, 0.4);
+            }
+
+            50% {
+                transform: scale(1.1);
+                box-shadow: 0 0 15px rgba(255, 0, 85, 0.8);
+            }
+
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 5px rgba(255, 0, 85, 0.4);
+            }
+        }
+
+        /* Refresh Animation */
+        @keyframes spinAround {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+
+            50% {
+                transform: scale(1.1);
+                opacity: 1;
+                text-shadow: 0 0 20px var(--primary-neon);
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+        }
+
+        /* ===== SEARCH & FILTER BAR ===== */
+        .search-filter-wrap {
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .search-box {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 14px;
+            color: var(--primary-neon);
+            font-size: 0.95rem;
+            pointer-events: none;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 14px 12px 40px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(0, 255, 204, 0.2);
+            color: var(--text-main);
+            border-radius: 10px;
+            font-family: var(--font-body);
+            font-size: 0.9rem;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .search-input:focus {
+            border-color: var(--primary-neon);
+            background: rgba(0, 255, 204, 0.04);
+            box-shadow: 0 0 15px rgba(0, 255, 204, 0.12);
+        }
+
+        .filter-chips {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 3px;
+            scrollbar-width: none;
+        }
+
+        .filter-chips::-webkit-scrollbar {
+            display: none;
+        }
+
+        .chip {
+            flex-shrink: 0;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-family: var(--font-display);
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.04);
+            transition: all 0.25s;
+            user-select: none;
+        }
+
+        .chip:active {
+            transform: scale(0.93);
+        }
+
+        .chip.active {
+            background: var(--primary-neon);
+            color: var(--bg-color);
+            border-color: var(--primary-neon);
+            box-shadow: 0 0 12px rgba(0, 255, 204, 0.4);
+        }
+
+        .chip.chip-alt.active {
+            background: var(--secondary-neon);
+            border-color: var(--secondary-neon);
+            box-shadow: 0 0 12px rgba(233, 0, 255, 0.4);
+        }
+
+        .chip.chip-warn.active {
+            background: var(--accent-color);
+            border-color: var(--accent-color);
+            box-shadow: 0 0 12px rgba(255, 170, 0, 0.4);
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            display: none;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            color: var(--text-muted);
+            margin-bottom: 15px;
+            display: block;
+            opacity: 0.4;
+        }
+
+        /* ===== SHARE BUTTON ===== */
+        .share-fab {
+            position: fixed;
+            bottom: calc(var(--nav-height) + 16px);
+            right: 16px;
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-neon), #00c9a7);
+            border: none;
+            color: var(--bg-color);
+            font-size: 1.1rem;
+            cursor: pointer;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0, 255, 204, 0.45);
+            z-index: 200;
+            transition: transform 0.2s, box-shadow 0.2s;
+            animation: fabIn 0.3s ease;
+        }
+
+        .share-fab:active {
+            transform: scale(0.9);
+        }
+
+        .share-fab.visible {
+            display: flex;
+        }
+
+        /* Force hide if detail screen is not active (Robust fix) */
+        #detail-screen:not(.active) .share-fab {
+            display: none !important;
+        }
+
+        @keyframes fabIn {
+            from {
+                transform: scale(0);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* ===== SCROLL TO TOP ===== */
+        #scroll-top-btn {
+            position: fixed;
+            bottom: calc(var(--nav-height) + 16px);
+            left: 16px;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: rgba(26, 26, 36, 0.95);
+            border: 1px solid rgba(0, 255, 204, 0.3);
+            color: var(--primary-neon);
+            font-size: 1rem;
+            cursor: pointer;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+            z-index: 200;
+            backdrop-filter: blur(8px);
+            transition: all 0.2s;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #scroll-top-btn.visible {
+            display: flex;
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        #scroll-top-btn:active {
+            transform: scale(0.9);
+        }
+
+        /* ===== CONFETTI CELEBRATION ===== */
+        #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 6999;
+            display: none;
+        }
+
+        /* ===== ENHANCED CARD EFFECTS ===== */
+        .card {
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+                box-shadow 0.25s ease,
+                border-color 0.25s ease !important;
+        }
+
+        .card:active {
+            transform: scale(0.97) !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+        }
+
+        /* Ripple effect on cards */
+        .card {
+            overflow: hidden;
+        }
+
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(0, 255, 204, 0.12);
+            transform: scale(0);
+            animation: rippleAnim 0.55s linear;
+            pointer-events: none;
+        }
+
+        @keyframes rippleAnim {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+
+        /* ===== FUTURISTIC SHARE MODAL (GLASSMORPHISM) ===== */
+        .share-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 18, 0.4);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            display: none;
+            justify-content: center;
+            align-items: flex-end;
+            z-index: 5000;
+            opacity: 0;
+            transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .share-modal.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .share-sheet {
+            width: 100%;
+            max-width: 480px;
+            background: rgba(26, 26, 36, 0.85);
+            border-radius: 30px 30px 0 0;
+            padding: 20px 20px 40px 20px;
+            border-top: 2px solid var(--primary-neon);
+            box-shadow: 0 -15px 50px rgba(0, 255, 204, 0.2);
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Ambient Glow Background */
+        .share-sheet::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at center, rgba(0, 255, 204, 0.05) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .share-modal.active .share-sheet {
+            transform: translateY(0);
+        }
+
+        .share-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .share-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: transform 0.2s, filter 0.2s;
+        }
+
+        .share-option:active {
+            transform: scale(0.9);
+            filter: brightness(1.2);
+        }
+
+        .share-icon-wrap {
+            width: 52px;
+            height: 52px;
+            border-radius: 18px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.4rem;
+            color: white;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+            border: 1.5px solid rgba(255, 255, 255, 0.08);
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        /* Hover Glow based on platform */
+        .share-option[onclick*='whatsapp'] .share-icon-wrap {
+            border-color: rgba(37, 211, 102, 0.4);
+        }
+
+        .share-option[onclick*='facebook'] .share-icon-wrap {
+            border-color: rgba(24, 119, 242, 0.4);
+        }
+
+        .share-option[onclick*='instagram'] .share-icon-wrap {
+            border-color: rgba(204, 35, 102, 0.4);
+        }
+
+        .share-option[onclick*='telegram'] .share-icon-wrap {
+            border-color: rgba(0, 136, 204, 0.4);
+        }
+
+        .share-option[onclick*='messenger'] .share-icon-wrap {
+            border-color: rgba(0, 178, 255, 0.4);
+        }
+
+        .share-label {
+            font-size: 0.62rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        /* Platform Colors (Vibrant Gradients) */
+        .color-whatsapp {
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+        }
+
+        .color-facebook {
+            background: linear-gradient(135deg, #1877F2 0%, #0C5DC7 100%);
+        }
+
+        .color-instagram {
+            background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+        }
+
+        .color-telegram {
+            background: linear-gradient(135deg, #0088cc 0%, #0077b5 100%);
+        }
+
+        .color-messenger {
+            background: linear-gradient(135deg, #0084ff 0%, #00c6ff 100%);
+        }
+
+        .color-chrome {
+            background: white;
+            border: 1px solid #eee;
+        }
+
+        .color-browser {
+            background: white;
+            border: 1px solid #eee;
+        }
+
+        .color-system {
+            background: linear-gradient(135deg, #607D8B, #455A64);
+        }
+
+        .color-back {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .color-more {
+            background: linear-gradient(135deg, var(--primary-neon), #00c9a7);
+            color: var(--bg-color);
+        }
+
+        .color-copy {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        /* QR Section */
+        .qr-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            text-align: center;
+        }
+
+        .qr-card {
+            background: rgba(255, 255, 255, 0.03);
+            display: inline-block;
+            padding: 15px;
+            border-radius: 20px;
+            border: 1px solid rgba(0, 255, 204, 0.15);
+            box-shadow: 0 0 25px rgba(0, 255, 204, 0.05);
+            position: relative;
+        }
+
+        .qr-image {
+            width: 130px;
+            height: 130px;
+            border-radius: 12px;
+            display: block;
+            border: 5px solid white;
+            /* Essential for QR contrast */
+        }
+
+        .qr-label {
+            font-size: 0.75rem;
+            color: var(--primary-neon);
+            margin-top: 12px;
+            font-family: var(--font-display);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .sheet-handle {
+            width: 45px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            margin: 0 auto 15px auto;
+        }
+
+        /* Diamond Animations */
+        @keyframes gemFloat {
+
+            0%,
+            100% {
+                transform: translateY(0) rotate(0);
+            }
+
+            50% {
+                transform: translateY(-10px) rotate(5deg);
+            }
+        }
+
+        .diamond-glow {
+            animation: gemFloat 3s ease-in-out infinite;
+        }
+
+        .diamond-wallet-card {
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .diamond-wallet-card:active {
+            transform: scale(0.95);
+        }
+
+        @media (max-width: 600px) {
+            #laptop-note {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Confetti Canvas -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- Scroll to Top -->
+    <button id="scroll-top-btn" onclick="scrollToTop()" title="Scroll to top">
+        <i class="fa-solid fa-arrow-up"></i>
+    </button>
+
+    <div class="app-container" id="main-container" style="overflow-y: auto;">
+
+        <!-- Splash / Initial Loader -->
+        <div id="splash-screen"
+            style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999;">
+            <i class="fa-solid fa-gamepad text-neon"
+                style="font-size: 5rem; margin-bottom: 20px; animation: pulse 1.5s infinite;"></i>
+            <h1 class="text-neon" style="font-size: 1.8rem;">NEON <span class="text-neon-alt">WARFARE</span></h1>
+            <div class="spinner" style="margin-top: 30px; width: 30px; height: 30px; border-width: 3px;"></div>
+        </div>
+
+        <!-- Pull to Refresh Indicator -->
+        <div id="pull-indicator" class="pull-indicator">
+            <i class="fa-solid fa-rotate"></i>
+        </div>
+
+        <!-- Loader -->
+        <div class="loader-overlay" id="loader-overlay">
+            <div class="spinner"></div>
+            <div class="loader-text">LOADING</div>
+        </div>
+
+        <!-- Map Preview Modal -->
+        <div class="map-modal" id="map-modal-overlay" onclick="closeMapPreview()">
+            <img id="map-preview-content" class="map-preview-img" src="" alt="Map Preview"
+                onclick="event.stopPropagation()">
+            <button class="neon-button secondary" style="width: auto; padding: 10px 30px;" onclick="closeMapPreview()">
+                <i class="fa-solid fa-xmark"></i> CLOSE PREVIEW
+            </button>
+        </div>
+
+        <!-- Already Have Access Modal -->
+        <div class="edit-modal" id="already-access-modal" style="display:none; z-index: 6000;">
+            <div class="edit-card" style="border: 2px solid var(--accent-color); text-align: center;"
+                onclick="event.stopPropagation()">
+                <div style="margin-bottom: 20px;">
+                    <i class="fa-solid fa-shield-halved"
+                        style="font-size: 3.5rem; color: var(--accent-color); text-shadow: 0 0 20px rgba(255,170,0,0.6);"></i>
+                    <h2
+                        style="font-family: var(--font-display); color: var(--accent-color); margin-top: 12px; font-size: 1.1rem;">
+                        ALREADY HAVE ACCESS</h2>
+                </div>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 12px;">This device is already
+                    linked to:</p>
+                <div
+                    style="background: rgba(255,170,0,0.1); border: 1px solid rgba(255,170,0,0.3); border-radius: 8px; padding: 12px; margin-bottom: 20px;">
+                    <i class="fa-solid fa-envelope" style="color: var(--accent-color); margin-right: 6px;"></i>
+                    <strong id="already-access-email" style="color: var(--text-main); word-break: break-all;"></strong>
+                </div>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 25px;">Please login with your
+                    registered account to Continue.</p>
+                <button class="neon-button" style="border-color: var(--accent-color); color: var(--accent-color);"
+                    onclick="closeAlreadyAccessModal()">
+                    <i class="fa-solid fa-right-to-bracket"></i> GO TO LOGIN
+                </button>
+            </div>
+        </div>
+
+        <!-- Winner Popup Modal -->
+        <div class="edit-modal" id="winner-popup-modal" style="display:none; z-index: 7000;">
+            <div class="edit-card"
+                style="border: 2px solid var(--accent-color); text-align: center; position: relative; overflow: hidden;"
+                onclick="event.stopPropagation()">
+                <div
+                    style="position:absolute; top:-40px; left:50%; transform:translateX(-50%); width:150px; height:150px; background: radial-gradient(circle, rgba(255,170,0,0.2) 0%, transparent 70%); pointer-events:none;">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <i class="fa-solid fa-trophy"
+                        style="font-size: 4rem; color: var(--accent-color); text-shadow: 0 0 25px rgba(255,170,0,0.8); animation: pulse 1.5s infinite;"></i>
+                </div>
+                <h2
+                    style="font-family: var(--font-display); color: var(--accent-color); font-size: 1rem; letter-spacing: 2px; margin-bottom: 5px;">
+                    MATCH COMPLETE!</h2>
+                <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 15px;" id="winner-tourney-name">
+                    Tournament</p>
+                <div
+                    style="background: rgba(255,170,0,0.08); border: 1px solid rgba(255,170,0,0.3); border-radius: 10px; padding: 15px; margin-bottom: 20px;">
+                    <div
+                        style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px;">
+                        🏆 Winner</div>
+                    <div id="winner-popup-name"
+                        style="font-family: var(--font-display); font-size: 1.4rem; color: var(--text-main); text-shadow: 0 0 10px rgba(255,170,0,0.5);">
+                    </div>
+                    <div id="winner-popup-uid" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;">
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="neon-button"
+                        style="border-color: var(--accent-color); color: var(--accent-color); flex:1;"
+                        onclick="closeWinnerPopup(); showScreen('leaderboard-screen')">
+                        <i class="fa-solid fa-trophy"></i> VIEW RESULTS
+                    </button>
+                    <button class="neon-button secondary" style="flex:1; padding: 15px;" onclick="closeWinnerPopup()">
+                        CLOSE
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Diamond Win Celebration Modal -->
+        <div class="edit-modal" id="diamond-win-modal" style="display:none; z-index: 8000;">
+            <div class="edit-card"
+                style="border: 2px solid var(--accent-color); text-align: center; position: relative;"
+                onclick="event.stopPropagation()">
+                <div style="margin-bottom: 20px;">
+                    <i class="fa-solid fa-gem diamond-glow"
+                        style="font-size: 5rem; color: var(--accent-color); text-shadow: 0 0 30px var(--accent-color);"></i>
+                </div>
+                <h2 class="text-neon" style="font-size: 1.5rem; letter-spacing: 2px;">CONGRATULATIONS!</h2>
+                <p style="color: var(--text-muted); margin: 10px 0 20px 0;">You have been awarded</p>
+                <div
+                    style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 30px;">
+                    <span id="win-diamond-amount"
+                        style="font-family: var(--font-display); font-size: 4rem; color: #fff; text-shadow: 0 0 15px rgba(255,255,255,0.5);">0</span>
+                    <i class="fa-solid fa-gem" style="font-size: 2rem; color: var(--accent-color);"></i>
+                </div>
+                <button class="neon-button" onclick="closeDiamondWinModal()" style="padding: 15px;">
+                    <i class="fa-solid fa-check"></i> COLLECT NOW
+                </button>
+            </div>
+        </div>
+
+        <!-- Payment Modal -->
+        <div class="edit-modal" id="payment-modal" style="display:none; z-index: 7000;">
+            <div class="edit-card" style="border: 2px solid var(--accent-color);" onclick="event.stopPropagation()">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <i class="fa-brands fa-google-pay" style="font-size: 2.5rem; color: #fff; margin-right:10px;"></i>
+                    <i class="fa-solid fa-indian-rupee-sign" style="font-size: 2.5rem; color: var(--accent-color);"></i>
+                    <h2 class="text-neon" style="margin-top:10px; font-size: 1.2rem;">Complete Payment</h2>
+                </div>
+
+                <div
+                    style="background: rgba(255,170,0,0.1); border: 1px solid rgba(255,170,0,0.3); border-radius: 8px; padding: 15px; margin-bottom: 20px; text-align:center;">
+                    <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 5px;">Entry Fee</p>
+                    <div style="font-family: var(--font-display); font-size: 2rem; color: var(--accent-color);"
+                        id="pay-amount">₹0</div>
+
+                    <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 15px; margin-bottom: 5px;">Pay to
+                        UPI ID</p>
+                    <div style="display: flex; align-items:center; justify-content:center; gap:10px;">
+                        <div style="font-weight: bold; color: white; letter-spacing: 1px;" id="pay-upi-id">Not Set</div>
+                        <button class="btn-copy" onclick="copyUpiId()"
+                            style="background:rgba(255,255,255,0.1); border:none; color:var(--accent-color); padding:5px 8px; border-radius:4px; cursor:pointer;"
+                            title="Copy UPI ID">
+                            <i class="fa-regular fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="laptop-note"
+                    style="background: rgba(0, 255, 204, 0.05); border: 1px dashed rgba(0, 255, 204, 0.3); padding: 10px; border-radius: 8px; margin-bottom: 20px; font-size: 0.75rem; color: #aaa; text-align: center;">
+                    <i class="fa-solid fa-laptop" style="margin-right:5px; color:var(--primary-neon);"></i>
+                    <b>Laptop User?</b> Copy the UPI ID above and pay using your mobile phone's UPI app.
+                </div>
+
+                <button class="neon-button" style="width: 100%; margin-bottom: 20px;" onclick="openUpiApp()"
+                    id="pay-now-btn">
+                    <i class="fa-solid fa-mobile-screen"></i> PAY NOW (Open Mobile App)
+                </button>
+
+                <div
+                    style="font-size: 0.65rem; color: #ffaa00; margin-top: 10px; background: rgba(255,170,0,0.1); padding: 8px; border-radius: 6px; border: 1px solid rgba(255,170,0,0.2);">
+                    <i class="fa-solid fa-triangle-exclamation"></i> <b>WARNING:</b> Admin manually verifies each UTR.
+                    Providing fake details will result in a permanent ban.
+                </div>
+
+                <div class="input-group">
+                    <label
+                        style="display: block; margin-bottom: 8px; font-size: 0.8rem; color: var(--text-muted);">Enter
+                        12-digit UTR / Reference No. after payment</label>
+                    <input type="text" id="pay-utr" class="neon-input" placeholder="e.g. 312345678901" required>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button class="neon-button"
+                        style="flex: 2; border-color: var(--accent-color); color: var(--accent-color);"
+                        onclick="submitPayment()">
+                        SUBMIT UTR
+                    </button>
+                    <button class="neon-button secondary" style="flex: 1; padding: 15px;" onclick="closePaymentModal()">
+                        CANCEL
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toasts -->
+        <div class="toast-container" id="toast-container"></div>
+
+        <!-- Edit Profile Modal -->
+        <div class="edit-modal" id="edit-profile-modal" onclick="closeEditProfile()">
+            <div class="edit-card" onclick="event.stopPropagation()">
+                <h2 class="text-neon" style="margin-bottom: 20px; text-align: center;">EDIT PROFILE</h2>
+                <label style="display: block; margin-bottom: 8px; font-size: 0.8rem; color: var(--text-muted);">In-Game
+                    Name</label>
+                <div class="input-group">
+                    <i class="fa-solid fa-user"></i>
+                    <input type="text" id="edit-name-input" class="neon-input" placeholder="Enter new name" required>
+                </div>
+
+                <label
+                    style="display: block; margin-bottom: 8px; font-size: 0.8rem; color: var(--text-muted); margin-top: 15px;">In-Game
+                    UID</label>
+                <div class="input-group">
+                    <i class="fa-solid fa-id-card"></i>
+                    <input type="text" id="edit-uid-input" class="neon-input" placeholder="Enter new UID" required>
+                </div>
+
+                <!-- Hidden File Input -->
+                <input type="file" id="edit-photo-file" style="display: none;" accept="image/*"
+                    onchange="handleImageUpload(event)">
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button class="neon-button" onclick="saveProfile()" style="padding: 15px;">
+                        <i class="fa-solid fa-floppy-disk"></i> SAVE
+                    </button>
+                    <button class="neon-button secondary" onclick="closeEditProfile()" style="padding: 15px;">
+                        CANCEL
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- =============== SCREENS =============== -->
+
+        <!-- LOGIN SCREEN -->
+        <div class="screen screen-no-nav" id="login-screen">
+            <div style="text-align: center; margin: 60px 0 40px 0;">
+                <i class="fa-solid fa-gamepad text-neon" style="font-size: 4rem; margin-bottom: 20px;"></i>
+                <h1 class="text-neon">NEON <span class="text-neon-alt">WARFARE</span></h1>
+                <p class="text-muted" style="margin-top: 10px;">Login to join tournaments</p>
+            </div>
+
+            <form onsubmit="handleLogin(event)">
+                <div class="input-group">
+                    <i class="fa-solid fa-envelope"></i>
+                    <input type="email" id="login-email" class="neon-input" placeholder="Email Address" required
+                        autocomplete="off" list="saved-emails-list">
+                    <datalist id="saved-emails-list"></datalist>
+                </div>
+                <div class="input-group">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" id="login-password" class="neon-input" placeholder="Password" required>
+                </div>
+                <button type="submit" class="neon-button" style="margin-top: 30px;">
+                    <i class="fa-solid fa-right-to-bracket"></i> Login
+                </button>
+            </form>
+            <div style="text-align: center; margin-top: 25px;">
+                <span class="text-muted">New player? </span>
+                <a href="#" class="text-neon-alt" style="text-decoration: none; font-weight: 600;"
+                    onclick="showScreen('register-screen')">Register here</a>
+            </div>
+        </div>
+
+        <!-- REGISTER SCREEN -->
+        <div class="screen screen-no-nav" id="register-screen">
+            <div style="text-align: center; margin: 40px 0 30px 0;">
+                <h2 class="text-neon-alt">REGISTER</h2>
+                <p class="text-muted">Create your player profile</p>
+            </div>
+
+            <form onsubmit="handleRegister(event)">
+                <div class="input-group">
+                    <i class="fa-solid fa-user"></i>
+                    <input type="text" id="reg-name" class="neon-input" placeholder="In-Game Name" required>
+                </div>
+                <div class="input-group">
+                    <i class="fa-solid fa-id-card"></i>
+                    <input type="number" id="reg-uid" class="neon-input" placeholder="Free Fire UID" required>
+                </div>
+                <div class="input-group">
+                    <i class="fa-solid fa-mobile-screen"></i>
+                    <select id="reg-device" class="neon-input" style="appearance: none;" required>
+                        <option value="" disabled selected>Select Device Type</option>
+                        <option value="Mobile">Mobile</option>
+                        <option value="PC">PC / Emulator</option>
+                        <option value="Tablet">Tablet</option>
+                    </select>
+                    <i class="fa-solid fa-chevron-down"
+                        style="left: auto; right: 15px; color: var(--text-muted); font-size: 0.8rem;"></i>
+                </div>
+                <div class="input-group">
+                    <i class="fa-solid fa-envelope"></i>
+                    <input type="email" id="reg-email" class="neon-input" placeholder="Email Address" required>
+                </div>
+                <div class="input-group">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" id="reg-password" class="neon-input" placeholder="Create Password" required>
+                </div>
+                <button type="submit" class="neon-button secondary" style="margin-top: 20px;">
+                    <i class="fa-solid fa-user-plus"></i> Create Account
+                </button>
+            </form>
+            <div style="text-align: center; margin-top: 25px;">
+                <a href="#" class="text-muted" style="text-decoration: none;" onclick="showScreen('login-screen')">Back
+                    to Login</a>
+            </div>
+        </div>
+
+        <!-- HOME SCREEN -->
+        <div class="screen" id="home-screen">
+            <div class="app-header" style="flex-direction: column; align-items: flex-start;">
+                <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <h1 class="text-neon" style="margin: 0;">TOURNAMENTS</h1>
+                        <div class="notification-btn" onclick="showScreen('notifications-screen')">
+                            <i class="fa-solid fa-bell text-neon-alt" style="font-size: 1.5rem;"></i>
+                            <span class="notif-badge" id="notif-badge">0</span>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-muted" style="margin-top: 5px;">Upcoming Battles</p>
+            </div>
+
+            <!-- Search & Filter -->
+            <div class="search-filter-wrap">
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="tournament-search" class="search-input" placeholder="Search tournaments..."
+                        oninput="filterTournaments()" autocomplete="off">
+                </div>
+                <div class="filter-chips">
+                    <div class="chip active" data-filter="all" onclick="setFilter(this, 'all')">⚡ All</div>
+                    <div class="chip chip-warn" data-filter="live" onclick="setFilter(this, 'live')">🔴 Live</div>
+                    <div class="chip chip-alt" data-filter="upcoming" onclick="setFilter(this, 'upcoming')">⏳ Upcoming
+                    </div>
+                    <div class="chip" data-filter="solo" onclick="setFilter(this, 'solo')">👤 Solo</div>
+                    <div class="chip" data-filter="duo" onclick="setFilter(this, 'duo')">👥 Duo</div>
+                    <div class="chip" data-filter="squad" onclick="setFilter(this, 'squad')">🛡️ Squad</div>
+                    <div class="chip" data-filter="free" onclick="setFilter(this, 'free')">🆓 Free</div>
+                </div>
+            </div>
+
+            <div id="active-matches-section" style="display: none; margin-bottom: 30px;">
+                <h3 class="text-neon-alt"
+                    style="font-size: 1rem; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                    <i class="fa-solid fa-circle-dot fa-beat" style="color: #ff3333;"></i> LIVE &amp; SOON
+                </h3>
+                <div id="live-tournament-list"></div>
+            </div>
+
+            <h3 class="text-neon" id="tournament-list-title" style="font-size: 1rem; margin-bottom: 15px;">UPCOMING
+                MATCHES</h3>
+            <div id="tournament-list">
+                <p class="text-muted" style="text-align: center; margin-top: 50px;">Loading tournaments...</p>
+            </div>
+            <!-- Empty state -->
+            <div class="empty-state" id="empty-search-state">
+                <i class="fa-solid fa-search"></i>
+                <p class="text-muted">No tournaments found</p>
+                <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 5px;">Try a different search or
+                    filter</p>
+            </div>
+        </div>
+
+        <!-- TOURNAMENT DETAILS SCREEN -->
+        <div class="screen" id="detail-screen">
+            <div class="app-header" style="margin-bottom: 20px;">
+                <button class="btn-back" onclick="showScreen('home-screen')"><i
+                        class="fa-solid fa-arrow-left"></i></button>
+                <h2 class="text-neon-alt" style="font-size: 1.2rem;">MATCH DETAILS</h2>
+                <div style="width: 20px;"></div> <!-- Spacer -->
+            </div>
+
+            <div id="detail-content">
+                <!-- Dynamic Content -->
+            </div>
+        </div>
+
+        <!-- LEADERBOARD SCREEN -->
+        <div class="screen" id="leaderboard-screen">
+            <div class="app-header">
+                <div>
+                    <h1 class="text-neon" style="font-family: var(--font-display);">MATCH HISTORY</h1>
+                    <p class="text-muted">Past Tournaments & Winners</p>
+                </div>
+            </div>
+
+            <div id="leaderboard-list">
+                <p class="text-muted" style="text-align: center; margin-top: 50px;">Loading history...</p>
+            </div>
+        </div>
+
+        <!-- NOTIFICATIONS SCREEN -->
+        <div class="screen" id="notifications-screen">
+            <div class="app-header">
+                <div>
+                    <h1 class="text-neon-alt">NOTICES</h1>
+                    <p class="text-muted">Admin Announcements</p>
+                </div>
+            </div>
+
+            <div id="notifications-list">
+                <p class="text-muted" style="text-align: center; margin-top: 50px;">Loading notifications...</p>
+            </div>
+        </div>
+
+        <!-- PROFILE SCREEN -->
+        <div class="screen" id="profile-screen">
+            <div class="app-header">
+                <div>
+                    <h1 class="text-neon">PROFILE</h1>
+                    <p class="text-muted">Player ID Card</p>
+                </div>
+                <i class="fa-solid fa-right-from-bracket text-neon-alt" style="font-size: 1.5rem; cursor: pointer;"
+                    onclick="logout()"></i>
+            </div>
+
+            <div class="profile-header">
+                <div class="avatar"
+                    onclick="event.stopPropagation(); document.getElementById('edit-photo-file').click();"
+                    style="cursor: pointer; position: relative; display: flex; justify-content: center; align-items: center; margin: 0 auto;"
+                    title="Click to Change Photo">
+                    <i class="fa-solid fa-user"></i>
+                    <!-- Small Camera Badge -->
+                    <div
+                        style="position: absolute; bottom: 5px; right: 5px; background: var(--primary-neon); color: var(--bg-color); width: 30px; height: 30px; border-radius: 50%; display: flex; justify-content: center; align-items: center; border: 3px solid var(--bg-color); box-shadow: 0 0 10px rgba(0, 255, 204, 0.5); font-size: 0.9rem;">
+                        <i class="fa-solid fa-camera"></i>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px;">
+                    <h2 id="prof-name" class="text-neon" style="font-size: 1.5rem; margin: 0;">Player Name</h2>
+                    <button onclick="openEditProfile()"
+                        style="background: transparent; border: none; color: var(--accent-color); cursor: pointer; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; padding: 0;">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                    </button>
+                </div>
+                <p id="prof-uid" class="badge" style="display: block; width: fit-content; margin: 5px auto 0;">UID:
+                    123456789</p>
+
+                <!-- Diamond Wallet -->
+                <div class="diamond-wallet-card"
+                    style="margin-top: 20px; background: linear-gradient(135deg, #1a1a24, #0f0f0f); border: 2px solid var(--accent-color); border-radius: 15px; padding: 20px; text-align: center; position: relative; overflow: hidden; box-shadow: 0 0 20px rgba(0, 255, 204, 0.2);">
+                    <div
+                        style="position: absolute; top: -10px; right: -10px; font-size: 5rem; color: var(--accent-color); opacity: 0.1; transform: rotate(15deg);">
+                        <i class="fa-solid fa-gem"></i>
+                    </div>
+                    <h3 style="font-size: 0.8rem; color: var(--text-muted); letter-spacing: 2px; margin-bottom: 10px;">
+                        WALLET</h3>
+                    <div
+                        style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px;">
+                        <i class="fa-solid fa-gem diamond-glow"
+                            style="font-size: 2rem; color: var(--accent-color); text-shadow: 0 0 15px var(--accent-color);"></i>
+                        <span id="prof-diamonds"
+                            style="font-family: var(--font-display); font-size: 2.5rem; color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.3);">0</span>
+                    </div>
+                    <button class="neon-button" onclick="requestRedeem()"
+                        style="font-size: 0.9rem; padding: 10px; border-color: var(--accent-color); color: var(--accent-color);">
+                        <i class="fa-solid fa-right-left"></i> REDEEM TO FREE FIRE
+                    </button>
+                    <p id="redeem-status"
+                        style="font-size: 0.65rem; color: var(--text-muted); margin-top: 8px; text-transform: uppercase; letter-spacing: 1px; display: none;">
+                    </p>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 30px;">
+                <div class="profile-row">
+                    <span class="text-muted">Email</span>
+                    <strong id="prof-email">player@email.com</strong>
+                </div>
+                <div class="profile-row">
+                    <span class="text-muted">Device</span>
+                    <strong id="prof-device">Mobile</strong>
+                </div>
+                <div class="profile-row" style="border-bottom: none;">
+                    <span class="text-muted">Tournaments Joined</span>
+                    <strong id="prof-joined" class="text-neon">0</strong>
+                </div>
+            </div>
+
+            <div style="margin-top: 30px;">
+                <button class="neon-button secondary" onclick="logout()"
+                    style="padding: 15px; border-color: #ff3333; color: #ff3333;">
+                    <i class="fa-solid fa-right-from-bracket"></i> LOGOUT
+                </button>
+            </div>
+
+
+        </div>
+
+        <!-- =============== BOTTOM NAV =============== -->
+        <div class="bottom-nav" id="bottom-nav" style="display: none;">
+            <div class="nav-item active" onclick="showScreen('home-screen')">
+                <i class="fa-solid fa-house"></i>
+                <span>Home</span>
+            </div>
+            <div class="nav-item" onclick="showScreen('leaderboard-screen')">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                <span>History</span>
+            </div>
+            <div class="nav-item" onclick="showScreen('profile-screen')">
+                <i class="fa-solid fa-user"></i>
+                <span>Profile</span>
+            </div>
+        </div>
+
+        <!-- Share Modal -->
+        <div class="share-modal" id="share-modal" onclick="closeShareModal()">
+            <div class="share-sheet" onclick="event.stopPropagation()">
+                <div class="sheet-handle"></div>
+                <h2 class="text-neon" style="font-size: 1.1rem; text-align: center; letter-spacing: 1px;">SHARE
+                    TOURNAMENT</h2>
+                <div class="share-grid">
+                    <div class="share-option" onclick="shareToPlatform('whatsapp')">
+                        <div class="share-icon-wrap color-whatsapp"><i class="fa-brands fa-whatsapp"></i></div>
+                        <span class="share-label">WhatsApp</span>
+                    </div>
+                    <div class="share-option" onclick="shareToPlatform('facebook')">
+                        <div class="share-icon-wrap color-facebook"><i class="fa-brands fa-facebook-f"></i></div>
+                        <span class="share-label">Facebook</span>
+                    </div>
+                    <div class="share-option" onclick="shareToPlatform('messenger')">
+                        <div class="share-icon-wrap color-messenger"><i class="fa-brands fa-facebook-messenger"></i>
+                        </div>
+                        <span class="share-label">Messenger</span>
+                    </div>
+                    <div class="share-option" onclick="shareToPlatform('instagram')">
+                        <div class="share-icon-wrap color-instagram"><i class="fa-brands fa-instagram"></i></div>
+                        <span class="share-label">Instagram</span>
+                    </div>
+                    <div class="share-option" onclick="shareToPlatform('telegram')">
+                        <div class="share-icon-wrap color-telegram"><i class="fa-brands fa-telegram"></i></div>
+                        <span class="share-label">Telegram</span>
+                    </div>
+                    <div class="share-option" onclick="shareToPlatform('copy')">
+                        <div class="share-icon-wrap color-copy"><i class="fa-solid fa-link"></i></div>
+                        <span class="share-label">Copy Link</span>
+                    </div>
+                </div>
+
+                <button class="neon-button secondary" style="margin-top: 30px; padding: 12px; font-size: 0.9rem;"
+                    onclick="closeShareModal()">CLOSE</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Firebase Logic -->
+    <script>
+        // ==========================================
+        // PLACEHOLDER FIREBASE CONFIG
+        // Replace this with your actual Firebase config
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyA2tykGe6MCHTcnNsCp7yoHq7aUbykJA10",
+            authDomain: "turnament-ee7b9.firebaseapp.com",
+            projectId: "turnament-ee7b9",
+            storageBucket: "turnament-ee7b9.firebasestorage.app",
+            messagingSenderId: "489074413578",
+            databaseURL: "https://turnament-ee7b9-default-rtdb.asia-southeast1.firebasedatabase.app/",
+            appId: "1:489074413578:web:e8d3e7f78113cba0534ff3"
+        };
+
+        // Initialize Firebase only if config is provided
+        let db;
+        if (firebaseConfig.apiKey !== "YOUR_API_KEY") {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.database();
+        } else {
+            console.warn("Firebase config is placeholder. App logic will not function properly without real config.");
+        }
+
+        // Directly pull token from native bridge and save to Firebase
+        function pullAndSaveToken() {
+            if (!activeUser || !activeUser.userId || !db) return;
+            try {
+                // Pull directly from native Android bridge (always has latest token)
+                const nativeToken = window.AndroidBridge ? window.AndroidBridge.getToken() : null;
+                if (nativeToken && nativeToken.length > 20) {
+                    const uid = activeUser.uid || activeUser.userId;
+                    db.ref('fcmTokens/' + uid).set({
+                        token: nativeToken,
+                        device: navigator.userAgent.substring(0, 50),
+                        lastUpdated: firebase.database.ServerValue.TIMESTAMP,
+                        email: activeUser.email || 'anonymous',
+                        source: 'android-native-sync'
+                    }).then(() => {
+                        console.log('Token saved directly via bridge for UID:', uid);
+                    }).catch(e => {
+                        console.error('Token save error:', e);
+                    });
+                } else {
+                    // Fallback to setupFCM if bridge not available
+                    if (typeof setupFCM === 'function') setupFCM();
+                }
+            } catch (e) {
+                console.error('pullAndSaveToken error:', e);
+            }
+        }
+
+        // Initialize Firebase Messaging for Web Push Notifications
+        async function requestFCMToken() {
+            pullAndSaveToken();
+        }
+
+        // State globals
+        var activeUser = JSON.parse(localStorage ? localStorage.getItem('tournamentUser') : null) || null;
+        var tournamentsData = {};
+        var currentTournamentId = null;
+        var activeMatchTimer = null;
+        var adminUpiSettings = { id: '', name: '' };
+
+        // Fetch UPI Settings globally
+        if (db) {
+            db.ref('settings/upi').on('value', snap => {
+                if (snap.exists()) {
+                    adminUpiSettings = snap.val();
+                }
+            });
+        }
+
+        // UI Utilities
+        function showLoader() { var el = document.getElementById('loader-overlay'); if (el) el.classList.add('active'); }
+        function hideLoader() { var el = document.getElementById('loader-overlay'); if (el) el.classList.remove('active'); }
+
+        function showMapPreview(imgUrl) {
+            const modal = document.getElementById('map-modal-overlay');
+            const mapImg = document.getElementById('map-preview-content');
+            if (imgUrl && imgUrl !== 'undefined' && imgUrl.trim() !== '') {
+                mapImg.src = imgUrl;
+            } else {
+                mapImg.src = 'https://placehold.co/600x400/2a2a35/00ffcc?text=MAP+NOT+UPLOADED';
+            }
+            modal.classList.add('active');
+        }
+
+        function copyToClipboard(text, label) {
+            if (!navigator.clipboard) {
+                // Fallback for older browsers
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    showToast(label + " copied!");
+                } catch (err) {
+                    showToast("Failed to copy", true);
+                }
+                document.body.removeChild(textArea);
+                return;
+            }
+            navigator.clipboard.writeText(text).then(() => {
+                showToast(label + " copied!");
+            }).catch(err => {
+                showToast("Failed to copy", true);
+            });
+        }
+
+        function closeMapPreview() {
+            document.getElementById('map-modal-overlay').classList.remove('active');
+        }
+
+        // --- Profile Edit Logic ---
+        function openEditProfile() {
+            document.getElementById('edit-name-input').value = activeUser.name;
+            document.getElementById('edit-uid-input').value = activeUser.uid || '';
+            document.getElementById('edit-profile-modal').classList.add('active');
+        }
+
+        function handleImageUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            if (file.size > 2 * 1024 * 1024) { // 2MB limit for compression start
+                showToast("File is too large! Max 2MB recommended.", true);
+            }
+
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                const img = new Image();
+                img.onload = function () {
+                    // Canvas compression
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 300;
+                    const MAX_HEIGHT = 300;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    const base64 = canvas.toDataURL('image/jpeg', 0.7);
+                    autoSavePhoto(base64);
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function autoSavePhoto(base64) {
+            if (!db || !activeUser) return showToast("App not ready", true);
+            showLoader();
+            try {
+                const userId = activeUser.userId;
+                await db.ref(`users/${userId}`).update({ photoUrl: base64 });
+
+                activeUser.photoUrl = base64;
+                localStorage.setItem('tournamentUser', JSON.stringify(activeUser));
+
+                populateProfile();
+                showToast("Profile Photo Updated!");
+            } catch (err) {
+                console.error(err);
+                showToast("Photo Error: " + err.message, true);
+            } finally {
+                hideLoader();
+            }
+        }
+
+        function closeEditProfile() {
+            document.getElementById('edit-profile-modal').classList.remove('active');
+        }
+
+        async function saveProfile() {
+            const newName = document.getElementById('edit-name-input').value.trim();
+            const newUid = document.getElementById('edit-uid-input').value.trim();
+
+            if (!newName) return showToast("Name cannot be empty", true);
+            if (!newUid) return showToast("UID cannot be empty", true);
+
+            showLoader();
+            try {
+                const userId = activeUser.userId;
+                const updates = {};
+
+                // Update basic user node
+                updates[`users/${userId}/name`] = newName;
+                updates[`users/${userId}/uid`] = newUid;
+
+                // Sync with joined tournaments
+                const joinedSnap = await db.ref('joinedPlayers').once('value');
+                const allJoins = joinedSnap.val() || {};
+
+                for (let tId in allJoins) {
+                    if (allJoins[tId][userId]) {
+                        updates[`joinedPlayers/${tId}/${userId}/name`] = newName;
+                        updates[`joinedPlayers/${tId}/${userId}/uid`] = newUid;
+                    }
+                }
+
+                // Perform multi-node update
+                await db.ref().update(updates);
+
+                // Update Local Storage & State
+                activeUser.name = newName;
+                activeUser.uid = newUid;
+                localStorage.setItem('tournamentUser', JSON.stringify(activeUser));
+
+                populateProfile();
+                closeEditProfile();
+                showToast("Profile Updated everywhere!");
+            } catch (err) {
+                showToast("Error updating profile: " + err.message, true);
+            }
+            hideLoader();
+        }
+
+        function showToast(message, isError = false) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${isError ? 'error' : ''}`;
+            toast.innerHTML = `<i class="fa-solid ${isError ? 'fa-circle-exclamation' : 'fa-circle-check'}"></i> <span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3500);
+        }
+
+        // --- Date Formatter ---
+        function formatDate(dateStr) {
+            if (!dateStr) return 'N/A';
+            const clean = dateStr.trim().replace(/\//g, '-').replace(/\./g, '-');
+            const pts = clean.split('-');
+            if (pts.length === 3) {
+                if (pts[0].length === 4) return `${pts[2]}-${pts[1]}-${pts[0]}`;
+                return `${pts[0].padStart(2, '0')}-${pts[1].padStart(2, '0')}-${pts[2]}`;
+            }
+            return dateStr;
+        }
+
+        // --- Ultra-Robust Time Parsing (v5 - Manual Construction) ---
+        function parseMatchTime(dateStr, timeStr) {
+            if (!dateStr || !timeStr) return NaN;
+
+            try {
+                // 1. Normalize Date Components
+                let d = dateStr.trim().replace(/-/g, '/');
+                let dParts = d.split('/');
+                let year, month, day;
+
+                if (dParts.length === 3) {
+                    if (dParts[0].length <= 2) { // DD/MM/YYYY
+                        year = parseInt(dParts[2].length === 2 ? '20' + dParts[2] : dParts[2]);
+                        month = parseInt(dParts[1]) - 1; // 0-indexed
+                        day = parseInt(dParts[0]);
+                    } else { // YYYY/MM/DD
+                        year = parseInt(dParts[0]);
+                        month = parseInt(dParts[1]) - 1;
+                        day = parseInt(dParts[2]);
+                    }
+                } else return NaN;
+
+                // 2. Normalize Time Components
+                let t = timeStr.trim().toUpperCase().replace(/\./g, ':');
+                let hour = 0, min = 0, sec = 0;
+
+                if (t.includes('AM') || t.includes('PM')) {
+                    const isPM = t.includes('PM');
+                    const tBase = t.replace(/[AP]M/, '').trim();
+                    const tParts = tBase.split(':');
+                    hour = parseInt(tParts[0] || 0);
+                    min = parseInt(tParts[1] || 0);
+                    if (isPM && hour < 12) hour += 12;
+                    if (!isPM && hour === 12) hour = 0;
+                } else {
+                    const tParts = t.split(':');
+                    hour = parseInt(tParts[0] || 0);
+                    min = parseInt(tParts[1] || 0);
+                    sec = parseInt(tParts[2] || 0);
+                }
+
+                // 3. Manual Construction (Most Robust)
+                const finalDate = new Date(year, month, day, hour, min, sec);
+                const time = finalDate.getTime();
+
+                if (isNaN(time)) {
+                    // Final fail-safe if manual failed
+                    return new Date(dateStr + ' ' + timeStr).getTime();
+                }
+
+                return time;
+            } catch (e) {
+                console.error("Time Parse Error:", e);
+                return NaN;
+            }
+        }
+
+        function showScreen(id) {
+            // Premium Feature: Foolproof cleanup of share button
+            if (id !== 'detail-screen') {
+                document.getElementById('share-fab')?.remove();
+                clearInterval(activeMatchTimer);
+            }
+
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+
+            // Update nav highlighting
+            if (['home-screen', 'leaderboard-screen', 'profile-screen'].includes(id)) {
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                const navItem = document.querySelector(`.nav-item[onclick="showScreen('${id}')"]`);
+                if (navItem) navItem.classList.add('active');
+
+                // Optimized: Show bottom nav immediately (z-index handles splash overlap)
+                document.getElementById('bottom-nav').style.display = 'flex';
+            }
+
+            // Screen specific triggers
+            if (id === 'home-screen') loadTournaments();
+            if (id === 'profile-screen') populateProfile();
+            if (id === 'leaderboard-screen') loadLeaderboards();
+            if (id === 'notifications-screen') {
+                loadNotifications();
+                clearNotifBadge();
+            }
+        }
+
+        // Initial Load Check
+        document.addEventListener('DOMContentLoaded', function () {
+            if (activeUser) {
+                if (!activeUser.userId && activeUser.uid) {
+                    activeUser.userId = activeUser.uid; // Migration for old sessions
+                    localStorage.setItem('tournamentUser', JSON.stringify(activeUser));
+                }
+                showScreen('home-screen');
+                if (db) {
+                    db.ref('users/' + activeUser.userId).once('value').then(function (snap) {
+                        if (snap.exists()) {
+                            activeUser = Object.assign({}, activeUser, snap.val());
+                            localStorage.setItem('tournamentUser', JSON.stringify(activeUser));
+                            // Pull and save token directly from bridge
+                            setTimeout(pullAndSaveToken, 1000);
+                            requestFCMToken();
+                            if (document.getElementById('profile-screen').classList.contains('active')) {
+                                populateProfile();
+                            }
+                        } else {
+                            logout();
+                        }
+                    }).catch(function (e) {
+                        console.error("Sync error", e);
+                    });
+                }
+            } else {
+                showScreen('login-screen');
+                populateSavedEmailSuggestion();
+            }
+
+            if (typeof initRealtimeAlerts === 'function') initRealtimeAlerts();
+            initPullToRefresh();
+
+            // Refresh Tournament List every 1 minute to handle time-based status changes
+            setInterval(() => {
+                if (document.getElementById('home-screen').classList.contains('active')) {
+                    renderTournaments();
+                }
+            }, 60000);
+        });
+
+        // Run this even faster (Immediate check)
+        (function () {
+            const user = localStorage.getItem('tournamentUser');
+            if (user) {
+                // If we could determine screen here, it would be even faster,
+                // but the DOM elements aren't ready yet.
+            }
+        })();
+
+        // ==========================================
+        // DEVICE-LEVEL SINGLE ACCOUNT RESTRICTION
+        // ==========================================
+        function getDeviceLinkedEmail() {
+            try { return localStorage.getItem('deviceLinkedEmail') || null; } catch (e) { return null; }
+        }
+
+        function setDeviceLinkedEmail(email) {
+            try { localStorage.setItem('deviceLinkedEmail', email); } catch (e) { }
+        }
+
+        function showAlreadyAccessModal(linkedEmail) {
+            document.getElementById('already-access-email').textContent = linkedEmail;
+            const modal = document.getElementById('already-access-modal');
+            modal.style.display = 'flex';
+            // Trigger animation
+            setTimeout(() => modal.classList.add('active'), 10);
+        }
+
+        function closeAlreadyAccessModal() {
+            const modal = document.getElementById('already-access-modal');
+            modal.classList.remove('active');
+            setTimeout(() => modal.style.display = 'none', 300);
+            showScreen('login-screen');
+        }
+
+        // Auth logic using DB (Custom approach as requested without Firebase Auth service)
+        async function handleRegister(e) {
+            e.preventDefault();
+            if (!db) return showToast("Firebase not configured", true);
+
+            const name = document.getElementById('reg-name').value;
+            const uid = document.getElementById('reg-uid').value;
+            const device = document.getElementById('reg-device').value;
+            const email = document.getElementById('reg-email').value.trim().toLowerCase();
+            const password = document.getElementById('reg-password').value;
+
+            // --- DEVICE-LEVEL CHECK ---
+            const linkedEmail = getDeviceLinkedEmail();
+            if (linkedEmail && linkedEmail !== email) {
+                return showAlreadyAccessModal(linkedEmail);
+            }
+
+            showLoader();
+            try {
+                // Check if email already exists in DB
+                const emailCheck = await db.ref('users').orderByChild('email').equalTo(email).once('value');
+                if (emailCheck.exists()) {
+                    hideLoader();
+                    // Link this device to the existing email
+                    setDeviceLinkedEmail(email);
+                    return showToast("Account with this email already exists! Please Login.", true);
+                }
+
+                // Very simple pseudo-auth for simulation, in prod should use Firebase Auth
+                const userId = 'user_' + Date.now();
+                const userData = { email, password, name, uid, device, userId, photoUrl: '' };
+
+                await db.ref('users/' + userId).set(userData);
+
+                activeUser = { userId, email, name, uid, device, photoUrl: '' };
+                localStorage.setItem('tournamentUser', JSON.stringify(activeUser));
+                requestFCMToken();
+                setDeviceLinkedEmail(email); // Lock device to this email
+
+                hideLoader();
+                showToast("Registration successful!");
+                showScreen('home-screen');
+            } catch (err) {
+                hideLoader();
+                showToast(err.message, true);
+            }
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            if (!db) return showToast("Firebase not configured", true);
+
+            const email = document.getElementById('login-email').value.trim().toLowerCase();
+            const password = document.getElementById('login-password').value;
+
+            // --- DEVICE-LEVEL CHECK ---
+            const linkedEmail = getDeviceLinkedEmail();
+            if (linkedEmail && linkedEmail !== email) {
+                return showAlreadyAccessModal(linkedEmail);
+            }
+
+            showLoader();
+            try {
+                const snapshot = await db.ref('users').orderByChild('email').equalTo(email).once('value');
+                if (snapshot.exists()) {
+                    let userFound = false;
+                    snapshot.forEach(child => {
+                        const data = child.val();
+                        if (data.password === password) {
+                            activeUser = {
+                                userId: data.userId,
+                                email,
+                                name: data.name,
+                                uid: data.uid,
+                                device: data.device,
+                                photoUrl: data.photoUrl || ''
+                            };
+                            localStorage.setItem('tournamentUser', JSON.stringify(activeUser));
+                            requestFCMToken();
+                            setDeviceLinkedEmail(email); // Lock device to this email
+                            userFound = true;
+                        }
+                    });
+                    if (userFound) {
+                        hideLoader();
+                        // Pull and save FCM token immediately after successful login
+                        setTimeout(pullAndSaveToken, 500);
+                        showToast('Login successful!');
+                        showScreen('home-screen');
+                    } else {
+                        hideLoader();
+                        showToast("Incorrect password!", true);
+                    }
+                } else {
+                    hideLoader();
+                    showToast("Account not found!", true);
+                }
+            } catch (err) {
+                hideLoader();
+                showToast(err.message, true);
+            }
+        }
+
+        function logout() {
+            activeUser = null;
+            localStorage.removeItem('tournamentUser');
+            document.getElementById('bottom-nav').style.display = 'none';
+            document.getElementById('login-email').value = '';
+            populateSavedEmailSuggestion();
+            showScreen('login-screen');
+            showToast("Logged out successfully");
+        }
+
+        function populateSavedEmailSuggestion() {
+            const datalist = document.getElementById('saved-emails-list');
+            if (!datalist) return;
+            datalist.innerHTML = '';
+            const linkedEmail = getDeviceLinkedEmail();
+            if (linkedEmail) {
+                const option = document.createElement('option');
+                option.value = linkedEmail;
+                datalist.appendChild(option);
+            }
+        }
+
+        function manualRefresh() {
+            const pullIndicator = document.getElementById('pull-indicator');
+            if (pullIndicator) {
+                pullIndicator.classList.add('spinning');
+                pullIndicator.style.transform = 'translateY(100px)';
+            }
+
+            // Reload data based on active screen
+            const activeScreen = document.querySelector('.screen.active');
+            if (activeScreen) {
+                const id = activeScreen.id;
+                if (id === 'home-screen') loadTournaments();
+                if (id === 'leaderboard-screen') loadLeaderboards();
+                if (id === 'notifications-screen') loadNotifications();
+                if (id === 'detail-screen' && currentTournamentId) openDetails(currentTournamentId);
+            }
+
+            showToast("Refreshing data...");
+
+            // Reset after a delay
+            setTimeout(() => {
+                if (pullIndicator) {
+                    pullIndicator.classList.remove('spinning');
+                    pullIndicator.style.transform = 'translateY(0)';
+                }
+            }, 1000);
+        }
+
+        // --- Pull to Refresh Logic ---
+        function initPullToRefresh() {
+            const container = document.getElementById('main-container');
+            const pullIndicator = document.getElementById('pull-indicator');
+            let startY = 0;
+            let currentY = 0;
+            let pulling = false;
+
+            container.addEventListener('touchstart', (e) => {
+                if (container.scrollTop <= 5) {
+                    startY = e.touches[0].pageY;
+                    currentY = startY;
+                    pulling = false; // Will set to true ONLY on move
+                }
+            }, { passive: true });
+
+            container.addEventListener('touchmove', (e) => {
+                const y = e.touches[0].pageY;
+                const diff = y - startY;
+
+                // Start pulling only if moving DOWN and at the TOP
+                if (container.scrollTop <= 5 && diff > 20) {
+                    pulling = true;
+                    currentY = y;
+
+                    const move = Math.min(diff * 0.4, 80); // Move indicator slightly
+                    pullIndicator.style.transform = `translateY(${move}px)`;
+                    pullIndicator.querySelector('i').style.transform = `rotate(${diff * 2}deg)`;
+
+                    if (diff > 180) { // Threshold for actual refresh
+                        pullIndicator.style.color = 'var(--secondary-neon)';
+                    } else {
+                        pullIndicator.style.color = 'var(--primary-neon)';
+                    }
+                } else if (diff < 0) {
+                    pulling = false;
+                }
+            }, { passive: true });
+
+            container.addEventListener('touchend', () => {
+                if (!pulling) return;
+                const diff = currentY - startY;
+                pulling = false;
+
+                if (diff > 180) {
+                    manualRefresh();
+                } else {
+                    pullIndicator.style.transform = 'translateY(0)';
+                }
+                // Reset coords
+                startY = 0;
+                currentY = 0;
+            });
+        }
+
+        // Data Loaders
+        // Efficient Global State
+        var globalJoinedData = {};
+
+        function loadTournaments() {
+            if (!db || !activeUser) return;
+
+            // Clear existing listeners to prevent accumulation
+            db.ref('tournaments').off();
+            db.ref('joinedPlayers').off();
+
+            // Listener 1: Tournament Updates
+            db.ref('tournaments').on('value', snap => {
+                tournamentsData = snap.val() || {};
+                renderTournaments();
+            });
+
+            // Listener 2: Join Status Updates
+            db.ref('joinedPlayers').on('value', joinedSnap => {
+                globalJoinedData = joinedSnap.val() || {};
+                renderTournaments();
+            });
+        }
+
+        // --- Tournament Status Helper ---
+        function getTournamentStatus(t) {
+            const startTime = parseMatchTime(t.date, t.time);
+            if (isNaN(startTime)) return 'UPCOMING';
+
+            const now = Date.now();
+
+            // If endTime is not set, assume 1 hour duration
+            let endTime;
+            if (t.endTime) {
+                endTime = parseMatchTime(t.date, t.endTime);
+                if (isNaN(endTime)) endTime = startTime + (3600000); // 1 hour
+            } else {
+                endTime = startTime + (3600000);
+            }
+
+            if (now > endTime) return 'COMPLETED';
+            if (now >= startTime && now <= endTime) return 'LIVE NOW';
+            if (now < startTime && now >= (startTime - 1800000)) return 'STARTING SOON'; // 30 mins
+            return 'UPCOMING';
+        }
+
+        function fmtDate(d) {
+            if (!d) return '';
+            const parts = d.split('-');
+            if (parts.length === 3) return parts[2] + '-' + parts[1] + '-' + parts[0];
+            return d;
+        }
+
+        function renderTournaments() {
+            const list = document.getElementById('tournament-list');
+            const liveSection = document.getElementById('active-matches-section');
+            const liveList = document.getElementById('live-tournament-list');
+            if (!list || !liveList) return;
+
+            if (Object.keys(tournamentsData).length === 0) {
+                list.innerHTML = `<p class="text-muted" style="text-align: center; margin-top: 50px;">No upcoming tournaments right now.</p>`;
+                liveSection.style.display = 'none';
+                return;
+            }
+
+            let upcomingHtml = '';
+            let liveHtml = '';
+            let liveCount = 0;
+
+            for (let id in tournamentsData) {
+                const t = tournamentsData[id];
+                const joinData = globalJoinedData[id] && globalJoinedData[id][activeUser.userId];
+                const isJoined = !!joinData;
+                const status = getTournamentStatus(t);
+
+                // Hide completed matches from Home Screen (they are in Result Board)
+                if (status === 'COMPLETED') continue;
+
+                let btnText = 'JOIN MATCH';
+                let btnIcon = 'fa-khanda';
+                let btnStyle = '';
+
+                if (isJoined) {
+                    btnText = 'JOINED';
+                    btnIcon = 'fa-check';
+                    btnStyle = 'background: rgba(0, 255, 204, 0.2);';
+                }
+
+                const cardHtml = `
+        <div class="card" style="cursor: default;" data-fee="${t.entryFee || '0'}" data-mode="${(t.mode || '').toLowerCase()}">
+            <img src="${t.bannerImage || 'https://placehold.co/400x150/2a2a35/00ffcc?text=TOURNAMENT'}" class="tourney-img" alt="Banner" onerror="this.onerror=null;this.src='https://placehold.co/400x150/2a2a35/00ffcc?text=INVALID+IMAGE';">
+            <div class="tourney-header">
+                <div class="tourney-title text-neon">${t.title}</div>
+                <span class="badge" style="cursor: pointer;" onclick="event.stopPropagation(); showMapPreview('${t.mapImage}')" title="Click to view map">
+                    <i class="fa-solid ${t.mode && t.mode.toLowerCase().includes('squad') ? 'fa-users' : (t.mode && t.mode.toLowerCase().includes('duo') ? 'fa-user-group' : 'fa-user')}"></i> ${t.mode} | <i class="fa-solid fa-map"></i> ${t.map}
+                </span>
+            </div>
+            <div style="margin-bottom: 12px;">
+                ${(() => {
+                        let statusClass = '';
+                        let icon = 'fa-calendar-days';
+                        if (status === 'LIVE NOW') { statusClass = 'status-live'; icon = 'fa-circle-dot'; }
+                        else if (status === 'STARTING SOON') { statusClass = 'status-soon'; icon = 'fa-clock'; }
+                        else if (status === 'UPCOMING') { statusClass = 'status-upcoming'; icon = 'fa-calendar-day'; }
+                        else { return ''; }
+
+                        return `<div class="status-badge ${statusClass}">
+                        <i class="fa-solid ${icon} ${status === 'LIVE NOW' ? 'fa-beat' : ''}"></i> ${status}
+                    </div>`;
+                    })()}
+            </div>
+            <div class="tourney-meta">
+                <span><i class="fa-regular fa-calendar"></i> ${fmtDate(t.date)}</span>
+                <span><i class="fa-regular fa-clock"></i> ${t.time}</span>
+            </div>
+            <div class="tourney-stats" style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.03);">
+                <div class="stat-box">
+                    <div class="stat-label" style="margin-bottom:4px;">Entry Fee</div>
+                    <div class="stat-value" style="color:#fff; font-size:1.1rem;">${(!t.entryFee || String(t.entryFee) === "0" || String(t.entryFee).toLowerCase() === "free") ? "FREE" : '₹' + t.entryFee}</div>
+                </div>
+                <div class="stat-box" style="border-left: 1px solid rgba(255,255,255,0.05); padding-left: 15px;">
+                    <div class="stat-label" style="margin-bottom:4px;">Total Prize</div>
+                    <div class="stat-value" style="color:var(--primary-neon);">${(t.prize || '').replace(/\s*diamonds?\s*/gi, '').trim()}</div>
+                </div>
+            </div>
+            <div style="display:flex; gap:10px; margin-top:10px;">
+                <button class="neon-button" style="padding: 10px; font-size: 0.9rem; flex: 1; ${btnStyle}"
+                    onclick="joinTournament('${id}')" ${isJoined && joinData.paymentStatus !== 'rejected' ? 'disabled' : ''}>
+                    <i class="fa-solid ${btnIcon}"></i> ${btnText}
+                </button>
+                <button class="neon-button secondary" style="padding: 10px; font-size: 0.9rem; flex: 1;" onclick="openDetails('${id}')">
+                    <i class="fa-solid fa-eye"></i> DETAILS
+                </button>
+            </div>
+        </div>`;
+
+                if (status === 'LIVE NOW' || status === 'STARTING SOON') {
+                    liveHtml += cardHtml;
+                    liveCount++;
+                } else {
+                    upcomingHtml += cardHtml;
+                }
+            }
+
+            if (liveCount > 0) {
+                liveList.innerHTML = liveHtml;
+                liveSection.style.display = 'block';
+            } else {
+                liveSection.style.display = 'none';
+            }
+
+            list.innerHTML = upcomingHtml || `<p class="text-muted" style="text-align: center; margin-top: 30px;">No more upcoming matches.</p>`;
+        }
+
+        function openDetails(id) {
+            currentTournamentId = id;
+            showScreen('detail-screen');
+            const t = tournamentsData[id];
+
+            // Premium Feature: Update Share Data
+            updateShareData(t.title, t.mode, t.prize);
+
+            const detailContent = document.getElementById('detail-content');
+
+            detailContent.innerHTML = `
+        <div style="margin-bottom: 25px;">
+            <img src="${t.bannerImage || 'https://placehold.co/400x150/2a2a35/00ffcc?text=TOURNAMENT'}" class="detail-banner" onerror="this.onerror=null;this.src='https://placehold.co/400x150/2a2a35/00ffcc?text=TOURNAMENT';">
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+            <span class="badge" style="background: rgba(0, 255, 204, 0.1); color: var(--primary-neon); border: 1px solid rgba(0, 255, 204, 0.2);">
+                <i class="fa-solid ${t.mode && t.mode.toLowerCase().includes('squad') ? 'fa-users' : (t.mode && t.mode.toLowerCase().includes('duo') ? 'fa-user-group' : 'fa-user')}"></i> ${t.mode}
+            </span>
+            <span class="badge" style="background: rgba(233, 0, 255, 0.1); color: var(--secondary-neon); border: 1px solid rgba(233, 0, 255, 0.2); cursor:pointer;" onclick="showMapPreview('${t.mapImage}')">
+                <i class="fa-solid fa-map"></i> ${t.map}
+            </span>
+        </div>
+
+        <h1 class="text-neon" style="font-size:1.6rem; margin-bottom: 5px; letter-spacing: 1px;">${t.title}</h1>
+
+        <div id="status-display-detail" style="margin-bottom: 25px;">
+            ${(() => {
+                    const status = getTournamentStatus(t);
+                    let statusClass = '';
+                    let icon = 'fa-calendar-days';
+                    if (status === 'LIVE NOW') { statusClass = 'status-live'; icon = 'fa-circle-dot'; }
+                    else if (status === 'STARTING SOON') { statusClass = 'status-soon'; icon = 'fa-clock'; }
+                    else if (status === 'UPCOMING') { statusClass = 'status-upcoming'; icon = 'fa-calendar-day'; }
+                    else if (status === 'COMPLETED') { statusClass = 'status-completed'; icon = 'fa-circle-check'; }
+                    else { return ''; }
+
+                    return `<div class="status-badge ${statusClass}">
+                    <i class="fa-solid ${icon} ${status === 'LIVE NOW' ? 'fa-beat' : ''}"></i> ${status}
+                </div>`;
+                })()}
+        </div>
+
+        <div class="detail-grid">
+            <div class="detail-item">
+                <i class="fa-regular fa-calendar"></i>
+                <div class="detail-label">Match Date</div>
+                <div class="detail-value">${fmtDate(t.date)}</div>
+            </div>
+            <div class="detail-item">
+                <i class="fa-regular fa-clock"></i>
+                <div class="detail-label">Start Time</div>
+                <div class="detail-value">${t.time}</div>
+            </div>
+            <div class="detail-item">
+                <i class="fa-solid fa-hourglass-end"></i>
+                <div class="detail-label">End Time</div>
+                <div class="detail-value">${t.endTime || 'TBA'}</div>
+            </div>
+            <div class="detail-item" style="border-color: rgba(0, 255, 204, 0.2);">
+                <i class="fa-solid fa-indian-rupee-sign"></i>
+                <div class="detail-label">Entry Fee</div>
+                <div class="detail-value" style="color: var(--primary-neon);">${(!t.entryFee || String(t.entryFee) === "0" || String(t.entryFee).toLowerCase() === "free") ? "FREE" : '₹' + t.entryFee}</div>
+            </div>
+            <div class="detail-item" style="grid-column: span 2; border-color: rgba(233, 0, 255, 0.2);">
+                <i class="fa-solid fa-trophy" style="color: var(--secondary-neon);"></i>
+                <div class="detail-label">Total Prize</div>
+                <div class="detail-value" style="color: var(--secondary-neon); font-size: 1.2rem;">${(t.prize || '').replace(/\s*diamonds?\s*/gi, '').trim()}</div>
+            </div>
+        </div>
+
+        <div class="countdown-box" id="timer-box" style="margin-top: 20px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 16px; padding: 25px 15px; text-align: center; display: ${getTournamentStatus(t) === 'COMPLETED' ? 'none' : 'block'};">
+            <div id="timer-label" class="text-muted" style="font-size: 0.8rem; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 2px; font-weight: 600;">Match Starts In</div>
+            <div id="timer-status" class="text-neon" style="display: none; font-size: 1.2rem; font-weight: 800; margin-bottom: 15px;"></div>
+            <div class="timer-segments" id="timer-segments">
+                <div class="timer-block" id="block-days" style="display: none;">
+                    <div class="timer-value" id="t-days">00</div>
+                    <div class="timer-unit">Days</div>
+                </div>
+                <div class="timer-block">
+                    <div class="timer-value" id="t-hours">00</div>
+                    <div class="timer-unit">Hours</div>
+                </div>
+                <div class="timer-block">
+                    <div class="timer-value" id="t-mins">00</div>
+                    <div class="timer-unit">Mins</div>
+                </div>
+                <div class="timer-block">
+                    <div class="timer-value" id="t-secs">00</div>
+                    <div class="timer-unit">Secs</div>
+                </div>
+            </div>
+        </div>
+
+            ${getTournamentStatus(t) === 'COMPLETED' ?
+                    `<div style="text-align:center; padding:12px; background:rgba(255,255,255,0.03); border-radius:10px; color:var(--text-muted); border:1px solid rgba(255,255,255,0.05); font-size:0.85rem;">
+                    <i class="fa-solid fa-circle-check" style="color:var(--primary-neon);"></i> TOURNAMENT COMPLETED
+                 </div>` :
+                    `<button class="neon-button" onclick="joinTournament('${id}')" id="join-btn">
+                    <i class="fa-solid fa-khanda"></i> JOIN MATCH
+                 </button>`
+                }
+        </div>
+
+        <!-- Room Details (For Joined Only) -->
+        <div id="room-details" style="display:none; margin-top: 25px;">
+            <div class="section-title"><i class="fa-solid fa-door-open"></i> LOBBY ACCESS</div>
+            <div class="room-details-box" id="room-box" style="border: 2px solid rgba(0, 255, 204, 0.1); background: rgba(255,255,255,0.02); border-radius: 12px; padding: 25px; text-align: center; position: relative;">
+                <!-- Locked State -->
+                <div id="room-locked" style="display: block;">
+                    <div style="width: 60px; height: 60px; background: rgba(255,255,255,0.05); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;">
+                        <i class="fa-solid fa-lock" style="font-size: 1.5rem; color: #666;"></i>
+                    </div>
+                    <h3 style="font-size: 0.9rem; margin-bottom: 5px; color: #888; letter-spacing: 1px;">LOBBY DETAILS LOCKED</h3>
+                    <p class="text-muted" style="font-size: 0.8rem;" id="unlock-msg">Unlocks 15 mins before match begins</p>
+                </div>
+
+                <!-- Unlocked State -->
+                <div id="room-info" style="display:none;">
+                    <div style="font-size: 0.7rem; color: var(--primary-neon); font-family: var(--font-display); margin-bottom: 20px; letter-spacing: 2px; font-weight: bold;">
+                        <i class="fa-solid fa-unlock fa-bounce"></i> ACCESS GRANTED
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 20px;">
+                        <div style="background: rgba(0,255,204,0.08); padding: 20px; border-radius: 14px; border: 1.5px solid rgba(0, 255, 204, 0.3); box-shadow: 0 0 20px rgba(0, 255, 204, 0.1); position: relative; cursor: pointer;" onclick="copyToClipboard(document.getElementById('r-id').innerText, 'Room ID')">
+                            <div style="font-size: 0.7rem; color: var(--accent-color); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">
+                                <i class="fa-solid fa-id-card-clip"></i> Room ID
+                            </div>
+                            <div id="r-id" style="font-family: var(--font-display); font-size: 1.5rem; color: #fff; letter-spacing: 2px;">-</div>
+                            <div style="position: absolute; top: 15px; right: 15px; background: rgba(0,255,204,0.2); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                <i class="fa-regular fa-copy" style="font-size: 0.9rem; color: #fff;"></i>
+                            </div>
+                        </div>
+                        <div style="background: rgba(233,0,255,0.08); padding: 20px; border-radius: 14px; border: 1.5px solid rgba(233, 0, 255, 0.3); box-shadow: 0 0 20px rgba(233, 0, 255, 0.1); position: relative; cursor: pointer;" onclick="copyToClipboard(document.getElementById('r-pass').innerText, 'Password')">
+                            <div style="font-size: 0.7rem; color: var(--secondary-neon); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">
+                                <i class="fa-solid fa-key"></i> Password
+                            </div>
+                            <div id="r-pass" style="font-family: var(--font-display); font-size: 1.5rem; color: #fff; letter-spacing: 2px;">-</div>
+                            <div style="position: absolute; top: 15px; right: 15px; background: rgba(233,0,255,0.2); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                <i class="fa-regular fa-copy" style="font-size: 0.9rem; color: #fff;"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <p style="font-size: 0.7rem; color: #888; margin-top: 15px; font-style: italic;">Tap on a box to copy to clipboard</p>
+                </div>
+            </div>
+        </div>
+
+        ${t.rules ? `
+        <div class="section-title"><i class="fa-solid fa-shield-halved"></i> MATCH RULES</div>
+        <div class="rules-box" style="margin-top:0;">${t.rules}</div>
+        ` : ''}
+
+        <div class="player-list-container">
+            <div class="section-title">
+                <i class="fa-solid fa-users"></i> JOINED PLAYERS (<span id="player-count">0</span>)
+            </div>
+            <div id="joined-players-list">
+                <p class="text-muted" style="text-align: center; font-size: 0.85rem; padding: 20px;">Loading players...</p>
+            </div>
+        </div>
+    `;
+
+            setupTimerAndRoomState(id, t);
+        }
+
+        function setupTimerAndRoomState(tournamentId, t) {
+            if (!t) return;
+            clearInterval(activeMatchTimer);
+
+            if (!activeUser) {
+                startDisplayTimer(t, false, null);
+                return;
+            }
+
+            const userKey = activeUser.userId || activeUser.uid;
+
+            // Check if joined
+            db.ref(`joinedPlayers/${tournamentId}/${userKey}`).on('value', snap => {
+                const hasJoined = snap.exists();
+                const joinData = snap.val();
+                const joinBtn = document.getElementById('join-btn');
+                const roomDiv = document.getElementById('room-details');
+
+                if (hasJoined) {
+                    if (joinBtn) {
+                        joinBtn.innerHTML = `<i class="fa-solid fa-check"></i> JOINED`;
+                        joinBtn.style.background = 'rgba(0, 255, 204, 0.2)';
+                        joinBtn.disabled = true;
+                    }
+
+                    // Show room details immediately since we are no longer hardening
+                    if (roomDiv) roomDiv.style.display = 'block';
+                } else {
+                    if (roomDiv) roomDiv.style.display = 'none';
+                    if (joinBtn) {
+                        joinBtn.innerHTML = `<i class="fa-solid fa-khanda"></i> JOIN MATCH`;
+                        joinBtn.style.background = 'transparent';
+                        joinBtn.disabled = false;
+                    }
+                }
+
+                // Reveal room logic and players list
+                loadJoinedPlayers(tournamentId);
+
+                // Start Timer
+                startDisplayTimer(t, hasJoined, joinData);
+
+            }, err => {
+                console.warn("Could not read join status due to DB Rules/Error:", err);
+                loadJoinedPlayers(tournamentId); // Attempt to load players anyway
+                startDisplayTimer(t, false, null); // Run the timer as a Guest
+            });
+        }
+
+        function startDisplayTimer(t, hasJoined, joinData) {
+            // FIX: Clear interval FIRST to prevent accumulation if setupTimerAndRoomState is re-called by .on('value')
+            clearInterval(activeMatchTimer);
+
+            const matchTime = parseMatchTime(t.date, t.time);
+
+            if (isNaN(matchTime)) {
+                const timerBox = document.getElementById('timer-box');
+                const statusText = document.getElementById('timer-status');
+                const segments = document.getElementById('timer-segments');
+                const infoEl = document.getElementById('timer-info');
+
+                if (statusText) {
+                    statusText.innerText = "TBA";
+                    statusText.style.display = 'block';
+                }
+                if (segments) segments.style.display = 'none';
+                if (infoEl) infoEl.style.display = 'none';
+                return;
+            }
+
+            const checkAndDisplay = () => {
+                const now = new Date().getTime();
+                const diff = matchTime - now;
+                const timerBox = document.getElementById('timer-box');
+                const statusText = document.getElementById('timer-status');
+                const segments = document.getElementById('timer-segments');
+                const infoEl = document.getElementById('room-info');
+
+                if (!timerBox) return clearInterval(activeMatchTimer);
+
+                // Handle Invalid Date
+                if (isNaN(matchTime)) {
+                    if (statusText) {
+                        statusText.innerText = "TBA";
+                        statusText.style.display = 'block';
+                    }
+                    if (segments) segments.style.display = 'none';
+                    if (infoEl) infoEl.style.display = 'none';
+                    return;
+                }
+
+                // FIX: Status update logic moved OUT of the else block to ensure badge reflects LIVE NOW/COMPLETED
+                const status = getTournamentStatus(t);
+                const labelEl = document.getElementById('timer-label');
+                const statusEl = document.getElementById('status-display-detail');
+
+                if (labelEl) {
+                    if (status === 'COMPLETED') labelEl.innerText = 'Tournament Status';
+                    else labelEl.innerText = "Match: " + formatDate(t.date) + " | " + t.time;
+                }
+                if (statusEl) {
+                    let statusClass = '';
+                    let icon = 'fa-calendar-days';
+                    if (status === 'LIVE NOW') { statusClass = 'status-live'; icon = 'fa-circle-dot'; }
+                    else if (status === 'STARTING SOON') { statusClass = 'status-soon'; icon = 'fa-clock'; }
+                    else if (status === 'COMPLETED') { statusClass = 'status-completed'; icon = 'fa-circle-check'; }
+
+                    statusEl.innerHTML = `<div class="status-badge ${statusClass}">
+                        <i class="fa-solid ${icon} ${status === 'LIVE NOW' ? 'fa-beat' : ''}"></i> ${status}
+                    </div>`;
+                }
+
+                if (status === 'COMPLETED') {
+                    if (timerBox) timerBox.style.display = 'none';
+                    clearInterval(activeMatchTimer);
+                    return;
+                }
+
+                if (diff <= 0) {
+                    if (statusText) {
+                        statusText.innerText = "MATCH STARTED";
+                        statusText.style.display = 'block';
+                    }
+                    if (segments) segments.style.display = 'none';
+                    if (hasJoined) revealRoom(t);
+                } else {
+                    if (statusText) statusText.style.display = 'none';
+                    if (segments) segments.style.display = 'flex';
+                    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                    const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    const s = Math.floor((diff % (1000 * 60)) / 1000);
+
+                    const daysEl = document.getElementById('t-days');
+                    const hoursEl = document.getElementById('t-hours');
+                    const minsEl = document.getElementById('t-mins');
+                    const secsEl = document.getElementById('t-secs');
+                    const blockDays = document.getElementById('block-days');
+
+                    if (daysEl && hoursEl && minsEl && secsEl) {
+                        if (days > 0) {
+                            if (blockDays) blockDays.style.display = 'flex';
+                            daysEl.innerText = days.toString().padStart(2, '0');
+                        } else {
+                            if (blockDays) blockDays.style.display = 'none';
+                        }
+                        hoursEl.innerText = h.toString().padStart(2, '0');
+                        minsEl.innerText = m.toString().padStart(2, '0');
+                        secsEl.innerText = s.toString().padStart(2, '0');
+                    }
+                }
+
+                // Reveal room ONLY if match is in less than 10 mins (600000ms)
+                if (hasJoined && diff <= 600000) {
+                    revealRoom(t);
+                } else if (hasJoined) {
+                    // Joined but too early
+                    if (document.getElementById('room-locked')) document.getElementById('room-locked').style.display = 'block';
+                    if (document.getElementById('room-info')) document.getElementById('room-info').style.display = 'none';
+                    const unlockMsg = document.getElementById('unlock-msg');
+                    if (unlockMsg) unlockMsg.innerText = "Unlocks 10 mins before match";
+                }
+            };
+
+            // Run immediately and then on interval
+            checkAndDisplay();
+            activeMatchTimer = setInterval(checkAndDisplay, 1000);
+        }
+
+        function revealRoom(t) {
+            const lockedEl = document.getElementById('room-locked');
+            const infoEl = document.getElementById('room-info');
+            const roomBox = document.getElementById('room-box');
+
+            if (lockedEl && infoEl) {
+                lockedEl.style.display = 'none';
+                infoEl.style.display = 'block';
+                if (roomBox) {
+                    roomBox.style.borderColor = 'var(--text-neon)';
+                    roomBox.style.boxShadow = '0 0 20px rgba(0, 255, 204, 0.3)';
+                }
+                document.getElementById('r-id').innerText = t.roomId || 'Wait..';
+                document.getElementById('r-pass').innerText = t.roomPassword || 'Wait..';
+            }
+        }
+
+        function loadJoinedPlayers(tournamentId) {
+            const listContainer = document.getElementById('joined-players-list');
+            const countEl = document.getElementById('player-count');
+
+            if (!listContainer) return;
+
+            db.ref(`joinedPlayers/${tournamentId}`).on('value', snap => {
+                const players = snap.val();
+                if (!players) {
+                    listContainer.innerHTML = `<p class="text-muted" style="text-align: center; font-size: 0.85rem;">Be the first to join!</p>`;
+                    countEl.innerText = '0';
+                    return;
+                }
+
+                let html = '';
+                let count = 0;
+                for (let uid in players) {
+                    const p = players[uid];
+                    count++;
+                    html += `
+                    <div class="player-item">
+                        <div class="player-avatar">
+                            <i class="fa-solid fa-user"></i>
+                        </div>
+                        <div class="player-info">
+                            <div class="player-name">${p.name}</div>
+                            <div class="player-uid">UID: ${p.uid}</div>
+                        </div>
+                        <div class="badge" style="font-size: 0.6rem; border-color: rgba(255,255,255,0.1); color: var(--text-muted);">
+                            ${p.device || 'Mobile'}
+                        </div>
+                    </div>
+                `;
+                }
+                listContainer.innerHTML = html;
+                countEl.innerText = count;
+            });
+        }
+
+        var pendingPaymentDetails = null;
+
+        async function joinTournament(tournamentId) {
+            if (!db) return;
+            try {
+                const userKey = activeUser.userId || activeUser.uid; // Fallback ensure
+                if (!userKey) throw new Error("User session invalid. Please re-login.");
+
+                // Safety check: already joined?
+                const snap = await db.ref(`joinedPlayers/${tournamentId}/${userKey}`).once('value');
+                if (snap.exists()) {
+                    const status = snap.val().paymentStatus;
+                    if (status === 'pending') showToast("Your payment is pending approval.", true);
+                    else if (status === 'rejected') showToast("Your previous payment was rejected. Contact admin.", true);
+                    else showToast("You have already joined this match!", true);
+                    return;
+                }
+
+                const t = tournamentsData[tournamentId];
+                if (!t) return;
+
+                const fee = parseFloat(t.entryFee);
+
+                // If Paid Tournament
+                if (!isNaN(fee) && fee > 0) {
+                    if (!adminUpiSettings.id) {
+                        showToast("Admin has not set UPI ID yet. Cannot join paid match.", true);
+                        return;
+                    }
+                    pendingPaymentDetails = { tournamentId, fee };
+                    document.getElementById('pay-amount').innerText = '₹' + fee;
+                    document.getElementById('pay-upi-id').innerText = adminUpiSettings.id;
+                    document.getElementById('pay-utr').value = '';
+
+                    const modal = document.getElementById('payment-modal');
+                    modal.style.display = 'flex';
+                    setTimeout(() => modal.classList.add('active'), 10);
+                    return; // Stop here, wait for UTR submission
+                }
+
+                // Free Tournament - direct join
+                executeJoin(tournamentId, 0, null, null);
+            } catch (err) {
+                console.error("Join Error: ", err);
+                showToast("Action failed: " + err.message, true);
+            }
+        }
+
+        function closePaymentModal() {
+            pendingPaymentDetails = null;
+            const modal = document.getElementById('payment-modal');
+            modal.classList.remove('active');
+            setTimeout(() => modal.style.display = 'none', 300);
+        }
+
+        function openUpiApp() {
+            if (!pendingPaymentDetails || !adminUpiSettings.id) return;
+            const upiUrl = `upi://pay?pa=${adminUpiSettings.id}&pn=${encodeURIComponent(adminUpiSettings.name || 'Admin')}&am=${pendingPaymentDetails.fee}&cu=INR&tn=TournamentEntry`;
+
+            // Check if on mobile or trying to open app
+            showToast("Opening UPI App...");
+            window.location.href = upiUrl;
+
+            // Fallback for desktop
+            setTimeout(() => {
+                if (document.hasFocus()) {
+                    showToast("UPI Apps are only on mobile. For laptop, please use Copy ID.", true);
+                }
+            }, 2500);
+        }
+
+        function copyUpiId() {
+            const upiId = document.getElementById('pay-upi-id').innerText;
+            if (upiId && upiId !== 'Not Set') {
+                copyToClipboard(upiId, "UPI ID");
+            }
+        }
+
+        function submitPayment() {
+            const utr = document.getElementById('pay-utr').value.trim().toUpperCase();
+
+            // Allow exactly 12 digits (standard UPI UTR) OR 12-16 alphanumeric (e.g. FamPay FMPIB4884720930)
+            const utrRegex = /^(?:\d{12}|[A-Z0-9]{12,16})$/;
+            if (!utrRegex.test(utr)) {
+                showToast("Enter valid 12-digit UTR or Txn ID (e.g. FMPIB...)", true);
+                return;
+            }
+
+            if (!pendingPaymentDetails) return;
+
+            if (confirm("Confirm Payment Submission?\n\nAdmin will verify your UTR: " + utr + ". Fake entries will result in a ban. Continue?")) {
+                executeJoin(pendingPaymentDetails.tournamentId, pendingPaymentDetails.fee, utr, 'approved');
+                closePaymentModal();
+            }
+        }
+
+        async function executeJoin(tournamentId, amount, utr, paymentStatus) {
+            showLoader();
+            try {
+                const joinData = {
+                    name: activeUser.name,
+                    uid: activeUser.uid,
+                    email: activeUser.email || 'N/A',
+                    device: activeUser.device || 'N/A'
+                };
+
+                if (paymentStatus) {
+                    joinData.amount = amount;
+                    joinData.utr = utr;
+                    joinData.paymentStatus = paymentStatus;
+                }
+
+                await db.ref(`joinedPlayers/${tournamentId}/${activeUser.userId}`).set(joinData);
+                hideLoader();
+
+                if (paymentStatus === 'pending') {
+                    showToast("Payment submitted! Waiting for admin approval.");
+                } else {
+                    showToast("Successfully Joined!");
+                }
+
+                // Refresh details
+                openDetails(tournamentId);
+            } catch (err) {
+                hideLoader();
+                showToast("Error joining: " + err.message, true);
+            }
+        }
+
+        function populateProfile() {
+            const nameEl = document.getElementById('prof-name');
+            const uidEl = document.getElementById('prof-uid');
+            const avatarEl = document.querySelector('.avatar');
+
+            nameEl.innerText = activeUser.name;
+            uidEl.innerText = `UID: ${activeUser.uid}`;
+            document.getElementById('prof-email').innerText = activeUser.email;
+            document.getElementById('prof-device').innerText = activeUser.device;
+
+            // Diamond Wallet Integration
+            const diamondEl = document.getElementById('prof-diamonds');
+            if (diamondEl) diamondEl.innerText = activeUser.diamonds || 0;
+
+            // Handle Avatar Photo
+            if (activeUser.photoUrl && activeUser.photoUrl.trim() !== '') {
+                avatarEl.innerHTML = `<img src="${activeUser.photoUrl}" onerror="this.src='https://placehold.co/100x100/2a2a35/00ffcc?text=ERROR';">`;
+            } else {
+                avatarEl.innerHTML = `<i class="fa-solid fa-user"></i>`;
+            }
+
+            // Count joined
+            db.ref('joinedPlayers').once('value', snap => {
+                let count = 0;
+                snap.forEach(tourney => {
+                    if (tourney.hasChild(activeUser.userId)) count++;
+                });
+                document.getElementById('prof-joined').innerText = count;
+            });
+        }
+
+        function loadLeaderboards() {
+            if (!db) return;
+            db.ref('results').off(); // Clear existing
+            db.ref('results').limitToLast(15).on('value', snap => {
+                const list = document.getElementById('leaderboard-list');
+                if (!snap.exists()) {
+                    list.innerHTML = `<p class="text-muted" style="text-align: center; margin-top: 50px;">No match history found yet.</p>`;
+                    return;
+                }
+
+                let html = '';
+                let val = snap.val();
+                let arr = Object.keys(val).reverse(); // newest first
+
+                arr.forEach((tId) => {
+                    const res = val[tId];
+                    const t = tournamentsData[tId] || {};
+                    const tName = t.title || 'Tournament Match';
+                    const banner = t.bannerImage || 'https://placehold.co/400x150/2a2a35/00ffcc?text=TOURNAMENT';
+
+                    let rankingsHtml = '';
+                    if (res.winners && Array.isArray(res.winners)) {
+                        res.winners.forEach(w => {
+                            const medal = w.rank === 1 ? '🥇' : (w.rank === 2 ? '🥈' : '🥉');
+                            rankingsHtml += `
+                                <div style="display:flex; align-items:center; gap:12px; margin-top:8px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.05);">
+                                    <div style="font-size:1.2rem; width:25px; text-align:center;">${medal}</div>
+                                    <div style="flex:1;">
+                                        <div style="font-size:0.9rem; color:#fff; font-weight:600; letter-spacing:0.5px;">${w.name}</div>
+                                        <div style="font-size:0.7rem; color:var(--text-muted);">UID: ${w.uid}</div>
+                                    </div>
+                                    <div class="text-neon" style="font-size:0.85rem; font-weight:700;">${w.diamonds || 0}</div>
+                                </div>
+                            `;
+                        });
+                    } else {
+                        // Fallback for old results
+                        rankingsHtml = `
+                            <div style="display:flex; align-items:center; gap:12px; margin-top:8px;">
+                                <div style="font-size:1.2rem; width:25px; text-align:center;">🥇</div>
+                                <div style="flex:1;">
+                                    <div style="font-size:0.9rem; color:#fff; font-weight:600;">${res.winnerName}</div>
+                                    <div style="font-size:0.7rem; color:var(--text-muted);">UID: ${res.winnerUID}</div>
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    html += `
+            <div class="history-card">
+                <img src="${banner}" class="history-banner" alt="Banner" onerror="this.src='https://placehold.co/400x120/2a2a35/00ffcc?text=MATCH+RECORD';">
+                <div class="history-content">
+                    <div style="font-size: 0.65rem; color: var(--secondary-neon); font-weight: 800; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px;">Tournament Record</div>
+                    <div style="font-size: 1.1rem; color: #fff; font-weight: 800; margin-bottom: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${tName}</div>
+                    
+                    <div class="rankings-container">
+                        ${rankingsHtml}
+                    </div>
+
+                    <button class="neon-button secondary" style="width:100%; padding:10px; font-size:0.8rem; margin-top:20px; border-color:rgba(255,255,255,0.1);" onclick="openDetails('${tId}')">
+                        <i class="fa-solid fa-eye"></i> MATCH DETAILS
+                    </button>
+                </div>
+            </div>`;
+                });
+                list.innerHTML = html;
+            });
+        }
+
+        function loadNotifications() {
+            if (!db) return;
+            db.ref('notifications').off(); // Clear existing
+            db.ref('notifications').limitToLast(20).on('value', snap => {
+                const list = document.getElementById('notifications-list');
+                if (!snap.exists()) {
+                    list.innerHTML = `<p class="text-muted" style="text-align: center; margin-top: 50px;">No new alerts.</p>`;
+                    return;
+                }
+
+                let html = '';
+                let val = snap.val();
+                let arr = Object.keys(val).reverse();
+
+                arr.forEach(nId => {
+                    const n = val[nId];
+                    html += `
+            <div class="card" style="border-left: 4px solid var(--secondary-neon);">
+                <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:5px;">
+                    <i class="fa-solid fa-clock"></i> ${n.time || ''}
+                </div>
+                <div style="font-size:0.95rem; line-height: 1.4;">${n.message}</div>
+            </div>`;
+                });
+                list.innerHTML = html;
+            });
+        }
+
+        // --- Real-time Alerts Hook ---
+        var unreadNotifs = 0;
+        function initRealtimeAlerts() {
+            if (!db) return;
+            const notifRef = db.ref('notifications');
+            const resultRef = db.ref('results');
+            const startTime = Date.now();
+
+            // Listen for NEW notifications only
+            const lastSeen = parseInt(localStorage.getItem('lastSeenNotifTime') || '0');
+
+            notifRef.off('child_added'); // Clear any existing
+            notifRef.limitToLast(30).on('child_added', snap => {
+                const n = snap.val();
+                const nId = snap.key;
+                const timestamp = parseInt(nId.split('_')[1]) || 0;
+
+                if (timestamp > lastSeen) {
+                    // If user is ALREADY on the notifications screen, mark as seen immediately
+                    if (document.getElementById('notifications-screen').classList.contains('active')) {
+                        localStorage.setItem('lastSeenNotifTime', Date.now().toString());
+                        return;
+                    }
+
+                    unreadNotifs++;
+                    updateNotifBadge();
+
+                }
+            });
+
+            // ==========================================
+            // AUTO WINNER DISPLAY — Real-time Results
+            // ==========================================
+            resultRef.on('child_added', snap => {
+                const res = snap.val();
+                const tId = snap.key;
+
+                // Use the timestamp stored in the result object
+                if (res.timestamp && res.timestamp > startTime) {
+                    const tName = tournamentsData[tId]?.title || 'a Tournament';
+
+                    // Refresh leaderboard data in background
+                    loadLeaderboards();
+
+                    // Show winner popup
+                    showWinnerPopup(res.winnerName, res.winnerUID, tName);
+
+                    // Note: We don't increment unreadNotifs for results
+                    // because results aren't shown in the Notices list.
+                    // This keeps the badge count consistent with the Notices screen.
+                }
+            });
+        }
+
+        function updateNotifBadge() {
+            const badge = document.getElementById('notif-badge');
+            if (unreadNotifs > 0) {
+                badge.innerText = unreadNotifs > 9 ? '9+' : unreadNotifs;
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        function clearNotifBadge() {
+            unreadNotifs = 0;
+            updateNotifBadge();
+            // Save current time as last seen to clear the badge persistently
+            localStorage.setItem('lastSeenNotifTime', Date.now().toString());
+        }
+
+
+        function showWinnerPopup(winnerName, winnerUID, tourneyName) {
+            document.getElementById('winner-popup-name').textContent = winnerName || 'Unknown';
+            document.getElementById('winner-popup-uid').textContent = 'UID: ' + (winnerUID || 'N/A');
+            document.getElementById('winner-tourney-name').textContent = tourneyName;
+            const modal = document.getElementById('winner-popup-modal');
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
+            if (window.navigator && window.navigator.vibrate) {
+                window.navigator.vibrate([300, 100, 300, 100, 300]);
+            }
+        }
+
+        function closeWinnerPopup() {
+            const modal = document.getElementById('winner-popup-modal');
+            modal.classList.remove('active');
+            setTimeout(() => modal.style.display = 'none', 300);
+        }
+
+        initRealtimeAlerts();
+
+        // ============================================================
+        //  FEATURE: SEARCH & FILTER TOURNAMENTS
+        // ============================================================
+        let _activeFilter = 'all';
+        let _allTournamentCards = [];
+
+        // Called whenever tournament-list is re-rendered; re-indexes cards
+        function indexTournamentCards() {
+            _allTournamentCards = Array.from(
+                document.querySelectorAll('#tournament-list .card, #live-tournament-list .card')
+            );
+        }
+
+        function setFilter(chipEl, filter) {
+            _activeFilter = filter;
+            document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+            chipEl.classList.add('active');
+
+            // Update Header Title based on filter
+            const titleEl = document.getElementById('tournament-list-title');
+            if (titleEl) {
+                const titles = {
+                    'all': 'ALL TOURNAMENTS',
+                    'live': 'LIVE MATCHES',
+                    'upcoming': 'UPCOMING MATCHES',
+                    'solo': 'SOLO MATCHES',
+                    'duo': 'DUO MATCHES',
+                    'squad': 'SQUAD MATCHES',
+                    'free': 'FREE TOURNAMENTS'
+                };
+                titleEl.innerText = titles[filter] || 'TOURNAMENTS';
+            }
+
+            filterTournaments();
+        }
+
+        function filterTournaments() {
+            indexTournamentCards();
+            const q = (document.getElementById('tournament-search')?.value || '').toLowerCase().trim();
+            let visible = 0;
+
+            _allTournamentCards.forEach(card => {
+                const text = (card.innerText || '').toLowerCase();
+
+                // Status filter
+                let passFilter = true;
+                if (_activeFilter === 'live') {
+                    passFilter = text.includes('live') || text.includes('🔴');
+                } else if (_activeFilter === 'upcoming') {
+                    passFilter = !text.includes('completed') && !text.includes('live');
+                } else if (_activeFilter === 'solo') {
+                    const mode = (card.dataset.mode || '').toLowerCase();
+                    passFilter = mode === 'solo';
+                } else if (_activeFilter === 'duo') {
+                    const mode = (card.dataset.mode || '').toLowerCase();
+                    passFilter = mode === 'duo';
+                } else if (_activeFilter === 'squad') {
+                    const mode = (card.dataset.mode || '').toLowerCase();
+                    passFilter = mode === 'squad';
+                } else if (_activeFilter === 'free') {
+                    const fee = (card.dataset.fee || '0').toLowerCase().replace(/[₹\s,]/g, '').trim();
+                    passFilter = fee === '0' || fee === 'free';
+                }
+
+                // Text search
+                const passSearch = q === '' || text.includes(q);
+
+                const show = passFilter && passSearch;
+                card.style.display = show ? '' : 'none';
+                if (show) visible++;
+            });
+
+            // Show/hide empty state
+            const emptyEl = document.getElementById('empty-search-state');
+            if (emptyEl) emptyEl.style.display = (visible === 0 && _allTournamentCards.length > 0) ? 'block' : 'none';
+        }
+
+        // Hook into existing tournament render (observe DOM changes)
+        (function observeTournamentList() {
+            const lists = ['tournament-list', 'live-tournament-list'];
+            lists.forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                new MutationObserver(() => {
+                    filterTournaments();
+                    addRippleToCards();
+                }).observe(el, { childList: true, subtree: true });
+            });
+        })();
+
+        // ============================================================
+        //  FEATURE: SHARE TOURNAMENT
+        // ============================================================
+        let _currentTourneyShareData = { name: '', mode: '', prize: '' };
+
+        function updateShareData(name, mode, prize) {
+            _currentTourneyShareData = { name, mode, prize };
+
+            // Foolproof: Only create button if we are actually on detail-screen
+            if (document.getElementById('detail-screen').classList.contains('active')) {
+                // Remove existing if any to avoid duplicates
+                document.getElementById('share-fab')?.remove();
+
+                const btn = document.createElement('button');
+                btn.id = 'share-fab';
+                btn.className = 'share-fab visible';
+                btn.title = 'Share Tournament';
+                btn.onclick = shareCurrentTournament;
+                btn.innerHTML = '<i class="fa-solid fa-share-nodes"></i>';
+
+                // Append to the detail screen (it will be display:none if screen is none)
+                document.getElementById('detail-screen').appendChild(btn);
+            }
+        }
+
+        function shareCurrentTournament() {
+            const modal = document.getElementById('share-modal');
+            if (modal) {
+                modal.style.display = 'flex';
+                setTimeout(() => modal.classList.add('active'), 10);
+            }
+        }
+
+        function closeShareModal() {
+            const modal = document.getElementById('share-modal');
+            if (modal) {
+                modal.classList.remove('active');
+                setTimeout(() => modal.style.display = 'none', 300);
+            }
+        }
+
+        function shareToPlatform(platform) {
+            const { name, mode, prize } = _currentTourneyShareData;
+            const text = `🎮 *${name}* Tournament!\n` +
+                `Mode: ${mode || ''}  |  Prize: ${prize || ''}\n` +
+                `Join now on NEON WARFARE app! 🔥`;
+            let url = window.location.href;
+
+            // Handle local URLs
+            if (url.startsWith('file:') || url.includes('localhost') || url.includes('127.0.0.1')) {
+                url = 'https://neon-warfare.web.app';
+            }
+
+            const fullShareText = text + "\n" + url;
+
+            switch (platform) {
+                case 'whatsapp':
+                    window.location.href = `whatsapp://send?text=${encodeURIComponent(fullShareText)}`;
+                    setTimeout(() => {
+                        window.open(`https://wa.me/?text=${encodeURIComponent(fullShareText)}`, '_blank');
+                    }, 800);
+                    break;
+                case 'facebook':
+                    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(text)}`, '_blank');
+                    break;
+                case 'messenger':
+                    window.location.href = `fb-messenger://share/?link=${encodeURIComponent(url)}&app_id=123456789`;
+                    setTimeout(() => {
+                        window.open(`https://www.facebook.com/dialog/send?link=${encodeURIComponent(url)}&app_id=123456789&redirect_uri=${encodeURIComponent(url)}`, '_blank');
+                    }, 800);
+                    break;
+                case 'instagram':
+                    copyToClipboard(fullShareText, 'Tournament info');
+                    window.open('https://www.instagram.com/', '_blank');
+                    break;
+                case 'telegram':
+                    window.location.href = `tg://msg?text=${encodeURIComponent(fullShareText)}`;
+                    setTimeout(() => {
+                        window.open(`https://telegram.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank');
+                    }, 800);
+                    break;
+                case 'copy':
+                    copyToClipboard(fullShareText, 'Tournament Link');
+                    break;
+            }
+
+            closeShareModal();
+        }
+
+        // ============================================================
+        //  FEATURE: CONFETTI CELEBRATION
+        // ============================================================
+        function launchConfetti(duration = 3500) {
+            const canvas = document.getElementById('confetti-canvas');
+            if (!canvas) return;
+            canvas.style.display = 'block';
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            const ctx = canvas.getContext('2d');
+
+            const colors = ['#00ffcc', '#e900ff', '#ffaa00', '#ff3355', '#00aaff', '#ffffff'];
+            const pieces = Array.from({ length: 110 }, () => ({
+                x: Math.random() * canvas.width,
+                y: -10 - Math.random() * 120,
+                r: 4 + Math.random() * 6,
+                d: 3 + Math.random() * 5,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                tilt: Math.random() * 10 - 5,
+                tiltAngle: 0,
+                tiltAngleInc: 0.07 * Math.random() + 0.05,
+            }));
+
+            let elapsed = 0, last = performance.now();
+            function draw(now) {
+                const dt = now - last; last = now; elapsed += dt;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                pieces.forEach(p => {
+                    p.tiltAngle += p.tiltAngleInc;
+                    p.y += (Math.cos(p.d) + 1 + p.r / 2) * 1.2;
+                    p.x += Math.sin(p.tiltAngle) * 1.5;
+                    p.tilt = Math.sin(p.tiltAngle) * 12;
+                    ctx.beginPath();
+                    ctx.fillStyle = p.color;
+                    ctx.moveTo(p.x + p.tilt + p.r / 3, p.y);
+                    ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r / 5);
+                    ctx.lineTo(p.x + p.tilt - p.r / 3, p.y);
+                    ctx.closePath();
+                    ctx.fill();
+                    if (p.y > canvas.height + 20) {
+                        p.y = -10; p.x = Math.random() * canvas.width;
+                    }
+                });
+                if (elapsed < duration) requestAnimationFrame(draw);
+                else { ctx.clearRect(0, 0, canvas.width, canvas.height); canvas.style.display = 'none'; }
+            }
+            requestAnimationFrame(draw);
+        }
+
+        // Patch showWinnerPopup to trigger confetti
+        const _origShowWinnerPopup = showWinnerPopup;
+        window.showWinnerPopup = function (winnerName, winnerUID, tourneyName) {
+            _origShowWinnerPopup(winnerName, winnerUID, tourneyName);
+            launchConfetti();
+        };
+
+        // ============================================================
+        //  FEATURE: SCROLL TO TOP BUTTON
+        // ============================================================
+        function scrollToTop() {
+            const container = document.getElementById('main-container');
+            container?.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        (function initScrollTop() {
+            const container = document.getElementById('main-container');
+            const btn = document.getElementById('scroll-top-btn');
+            if (!container || !btn) return;
+            container.addEventListener('scroll', () => {
+                if (container.scrollTop > 250) btn.classList.add('visible');
+                else btn.classList.remove('visible');
+            }, { passive: true });
+        })();
+
+        // ============================================================
+        //  FEATURE: RIPPLE EFFECT ON CARDS
+        // ============================================================
+        function addRippleToCards() {
+            document.querySelectorAll('.card:not([data-ripple])').forEach(card => {
+                card.setAttribute('data-ripple', '1');
+                card.addEventListener('pointerdown', function (e) {
+                    const rect = card.getBoundingClientRect();
+                    const ripple = document.createElement('span');
+                    ripple.className = 'ripple';
+                    const size = Math.max(rect.width, rect.height);
+                    ripple.style.cssText = `width:${size}px; height:${size}px;
+                    left:${e.clientX - rect.left - size / 2}px;
+                    top:${e.clientY - rect.top - size / 2}px;`;
+                    card.appendChild(ripple);
+                    ripple.addEventListener('animationend', () => ripple.remove());
+                }, { passive: true });
+            });
+        }
+        addRippleToCards();
+
+
+        // ============================================================
+        //  FEATURE: SWIPE NAVIGATION FOR FILTERS
+        // ============================================================
+        let _touchStartX = 0;
+        let _touchEndX = 0;
+
+        function handleSwipe() {
+            const threshold = 80;
+            const swipeDist = _touchEndX - _touchStartX;
+
+            if (Math.abs(swipeDist) > threshold) {
+                const chips = Array.from(document.querySelectorAll('.filter-chips .chip'));
+                const activeIndex = chips.findIndex(c => c.classList.contains('active'));
+
+                if (swipeDist < 0) {
+                    // Swipe Left -> Next Filter
+                    if (activeIndex < chips.length - 1) {
+                        chips[activeIndex + 1].click();
+                        // Scroll chip into view
+                        chips[activeIndex + 1].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                    }
+                } else {
+                    // Swipe Right -> Prev Filter
+                    if (activeIndex > 0) {
+                        chips[activeIndex - 1].click();
+                        // Scroll chip into view
+                        chips[activeIndex - 1].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                    }
+                }
+            }
+        }
+
+        const listContainer = document.getElementById('search-screen');
+        if (listContainer) {
+            listContainer.addEventListener('touchstart', e => {
+                _touchStartX = e.changedTouches[0].screenX;
+            }, { passive: true });
+
+            listContainer.addEventListener('touchend', e => {
+                _touchEndX = e.changedTouches[0].screenX;
+                handleSwipe();
+            }, { passive: true });
+        }
+
+        // ============================================================
+        //  FEATURE: FCM PUSH NOTIFICATIONS SETUP
+        // ============================================================
+        function setupFCM() {
+            console.log("setupFCM Heartbeat Started");
+
+            // --- PERIODIC SYNC LOOP (AGRESSIVE) ---
+            setInterval(() => {
+                if (window.AndroidBridge && typeof activeUser !== 'undefined' && activeUser && activeUser.userId) {
+                    const nativeToken = window.AndroidBridge.getToken();
+                    if (nativeToken && nativeToken.length > 20) {
+                        processFCMToken(nativeToken, "NATIVE-HEARTBEAT");
+                    } else {
+                        console.log("Heartbeat: Bridge found but token is empty yet.");
+                    }
+                }
+            }, 3000); // Check every 3 seconds
+
+            // One-time immediate check
+            if (window.AndroidBridge) {
+                const immediateToken = window.AndroidBridge.getToken();
+                if (immediateToken && immediateToken.length > 20) {
+                    processFCMToken(immediateToken, "NATIVE-BRIDGE-INIT");
+                }
+            }
+
+            // Web-SDK Listener only for in-app popups
+            if (firebase.messaging.isSupported()) {
+                const messaging = firebase.messaging();
+                messaging.onMessage(payload => {
+                    const title = payload.notification?.title || "New Match Added!";
+                    const body = payload.notification?.body || "";
+                    if (typeof showToast === 'function') showToast("🔔 " + title);
+                });
+            }
+        }
+
+        // Shared logic to save token to database
+        let tokenRetryCount = 0;
+        function processFCMToken(token, source) {
+            console.log(`FCM Token received via ${source}:`, token);
+            if (!token || !db) return;
+
+            // CRITICAL: Check if we have a user. If not, retry in 2 seconds.
+            if (!activeUser || !activeUser.userId) {
+                if (tokenRetryCount < 10) { // Max 10 retries (20 seconds)
+                    console.log("activeUser not ready, retrying token save in 2s...");
+                    tokenRetryCount++;
+                    setTimeout(() => processFCMToken(token, source + "-RETRY"), 2000);
+                    return;
+                }
+                console.error("FCM Token not saved: activeUser never became ready.");
+                return;
+            }
+
+            const userData = activeUser;
+            const uid = userData.uid || userData.userId;
+
+            db.ref(`fcmTokens/${uid}`).set({
+                token: token,
+                device: navigator.userAgent.substring(0, 50),
+                lastUpdated: firebase.database.ServerValue.TIMESTAMP,
+                email: userData.email || 'anonymous',
+                source: source
+            }).then(() => {
+                console.log("Token saved to DB for UID:", uid);
+                // Silent in production
+            }).catch(err => {
+                console.error("DB Save Error:", err);
+            });
+        }
+
+        // Native Linkage Callback (Called from MainActivity.java)
+        function onNativeToken(token) {
+            console.log("FCM Token pushed from Native:", token);
+            processFCMToken(token, "NATIVE-PUSH");
+        }
+
+        // Self-test for user
+        async function testLocalNotification() {
+            if (window.AndroidBridge) {
+                showToast("Native App handle karega!");
+                return;
+            }
+            if (Notification.permission === 'granted') {
+                try {
+                    const reg = await navigator.serviceWorker.getRegistration();
+                    if (reg) {
+                        alert("Sending SW Notification...");
+                        reg.showNotification("Test Notification", {
+                            body: "Ye local test hai. Agar ye dikh raha hai toh system theek hai!",
+                            icon: './notif-icon.png'
+                        });
+                        showToast("Test notification sent locally!");
+                    } else {
+                        alert("No Service Worker Registration found!");
+                        showToast("Service Worker not ready!", true);
+                    }
+                } catch (e) {
+                    alert("SW Notification Error: " + e.message);
+                    // Fallback to basic Notification if SW fails
+                    new Notification("Test Notification (Basic)", {
+                        body: "Service Worker fail hua, basic notification try kar rahe hain.",
+                        icon: './notif-icon.png'
+                    });
+                }
+            } else {
+                alert("Permission NOT GRANTED: " + Notification.permission);
+                showToast("Permission not granted!", true);
+                setupFCM();
+            }
+        }
+
+        window.addEventListener('load', () => {
+            if (db) setTimeout(setupFCM, 2000);
+
+            // Snappier Splash Screen removal
+            const splash = document.getElementById('splash-screen');
+            if (splash) {
+                setTimeout(() => {
+                    splash.style.transition = 'opacity 0.6s ease';
+                    splash.style.opacity = '0';
+                    setTimeout(() => {
+                        splash.style.display = 'none';
+                        const mainContainer = document.getElementById('main-container');
+                        // Ensure layout stability (removed dynamic overflow change)
+                    }, 600);
+                }, 1000); // Reduced from 1500ms
+            }
+        });
+
+        // ==========================================
+        //  FEATURE: DIAMOND WALLET & REDEEM
+        // ==========================================
+        async function requestRedeem() {
+            if (!activeUser) return;
+            const diamonds = activeUser.diamonds || 0;
+
+            if (diamonds < 100) {
+                return showToast("Minimum 100 Diamonds required to redeem!", true);
+            }
+
+            if (!confirm(`Redeem ${diamonds} Diamonds to your Free Fire ID (${activeUser.uid})?`)) return;
+
+            showLoader();
+            try {
+                const requestId = 'req_' + Date.now();
+                const redeemData = {
+                    userId: activeUser.userId,
+                    name: activeUser.name,
+                    uid: activeUser.uid,
+                    diamonds: diamonds,
+                    status: 'pending',
+                    timestamp: Date.now()
+                };
+
+                await db.ref(`redeemRequests/${requestId}`).set(redeemData);
+
+                // Notification to Admin (implicitly via DB listener in admin.html)
+
+                // Deduct diamonds from local and remote
+                await db.ref(`users/${activeUser.userId}/diamonds`).set(0);
+                activeUser.diamonds = 0;
+                localStorage.setItem('tournamentUser', JSON.stringify(activeUser));
+                populateProfile();
+
+                showToast("Redeem Request Sent! Admin will process it soon.");
+                updateRedeemStatus('pending');
+            } catch (err) {
+                showToast("Redeem Error: " + err.message, true);
+            }
+            hideLoader();
+        }
+
+        function updateRedeemStatus(status) {
+            const statusEl = document.getElementById('redeem-status');
+            if (!statusEl) return;
+            statusEl.style.display = 'block';
+            if (status === 'pending') {
+                statusEl.innerHTML = `<i class="fa-solid fa-clock" style="color:var(--secondary-neon);"></i> PROCESSING TOP-UP...`;
+            } else if (status === 'approved') {
+                statusEl.innerHTML = `<i class="fa-solid fa-circle-check" style="color:var(--accent-color);"></i> TOP-UP SUCCESSFUL!`;
+                // Hide after 5 seconds
+                setTimeout(() => { statusEl.style.display = 'none'; }, 5000);
+            }
+        }
+
+        function showDiamondWinModal(amount) {
+            const amountEl = document.getElementById('win-diamond-amount');
+            if (amountEl) amountEl.innerText = amount;
+            const modal = document.getElementById('diamond-win-modal');
+            if (modal) {
+                modal.style.display = 'flex';
+                setTimeout(() => modal.classList.add('active'), 10);
+                launchConfetti(5000); // 5 seconds of celebration
+            }
+        }
+
+        function closeDiamondWinModal() {
+            const modal = document.getElementById('diamond-win-modal');
+            if (modal) {
+                modal.classList.remove('active');
+                setTimeout(() => modal.style.display = 'none', 300);
+            }
+        }
+
+        // Listen for Diamond changes & Redemptions
+        if (activeUser && db) {
+            const userRef = db.ref(`users/${activeUser.userId}`);
+
+            // Listen for diamond balance updates
+            userRef.child('diamonds').on('value', snap => {
+                const newDiamonds = snap.val() || 0;
+                const oldDiamonds = activeUser.diamonds || 0;
+
+                if (newDiamonds > oldDiamonds) {
+                    // Show celebration
+                    showDiamondWinModal(newDiamonds - oldDiamonds);
+                    // Update state
+                    activeUser.diamonds = newDiamonds;
+                    localStorage.setItem('tournamentUser', JSON.stringify(activeUser));
+                    populateProfile();
+                } else if (newDiamonds !== oldDiamonds) {
+                    activeUser.diamonds = newDiamonds;
+                    localStorage.setItem('tournamentUser', JSON.stringify(activeUser));
+                    populateProfile();
+                }
+            });
+
+            // Listen for redemption approvals
+            db.ref('redeemRequests').orderByChild('userId').equalTo(activeUser.userId).on('child_changed', snap => {
+                const req = snap.val();
+                if (req.status === 'approved') {
+                    updateRedeemStatus('approved');
+                    showToast("Your Diamond Top-up is successful!");
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>
